@@ -99,12 +99,15 @@ app.add_middleware(
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    headers = getattr(exc, "headers", None)
     return JSONResponse(
         status_code=exc.status_code,
+        headers=headers,
         content={
             "error": True,
             "status_code": exc.status_code,
             "message": exc.detail,
+            "detail": exc.detail,
             "path": request.url.path,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
@@ -120,6 +123,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "error": True,
             "status_code": 422,
             "message": "Request payload validation error",
+            "detail": exc.errors(),
             "details": exc.errors(),
             "path": request.url.path,
             "timestamp": datetime.now(timezone.utc).isoformat(),

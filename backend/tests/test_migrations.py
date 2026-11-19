@@ -12,7 +12,8 @@ async def test_alembic_version_table(db_session: AsyncSession):
     """Verify alembic_version table exists and tracks current revision."""
     result = await db_session.execute(text("SELECT version_num FROM alembic_version;"))
     rev = result.scalar()
-    assert rev == "0001_initial_schema"
+    assert rev in ("0001_initial_schema", "0002_refresh_token_family")
+    assert rev == "0002_refresh_token_family"
 
 
 @pytest.mark.asyncio
@@ -44,3 +45,17 @@ async def test_all_15_tables_exist_in_database(db_session: AsyncSession):
     }
 
     assert expected_tables.issubset(existing_tables)
+
+
+@pytest.mark.asyncio
+async def test_migration_0002_refresh_tokens_family_columns(db_session: AsyncSession):
+    """Verify migration 0002 added family_id, user_agent, and ip_address to refresh_tokens."""
+    result = await db_session.execute(text("""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'refresh_tokens';
+    """))
+    cols = {row[0] for row in result.fetchall()}
+    assert "family_id" in cols
+    assert "user_agent" in cols
+    assert "ip_address" in cols

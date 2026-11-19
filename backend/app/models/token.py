@@ -1,12 +1,12 @@
 """
 CivicMind AI — Refresh Token Persistence Model
-Stores cryptographic token hashes for rotation, session revocation, and multi-device auth security.
+Stores cryptographic token hashes for rotation, session revocation, and token reuse detection.
 """
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
-from sqlalchemy import String, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, Index, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
@@ -17,6 +17,11 @@ if TYPE_CHECKING:
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
+    __table_args__ = (
+        Index("idx_refresh_tokens_family_id", "family_id"),
+        Index("idx_refresh_tokens_user_id", "user_id"),
+        Index("idx_refresh_tokens_hash", "token_hash", unique=True),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -27,13 +32,16 @@ class RefreshToken(Base):
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     token_hash: Mapped[str] = mapped_column(
         String(255),
         unique=True,
-        index=True,
         nullable=False,
+    )
+    family_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=False,
+        default=uuid.uuid4,
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -48,6 +56,14 @@ class RefreshToken(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
+    )
+    user_agent: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    ip_address: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
     )
 
     # Relationship

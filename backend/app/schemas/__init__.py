@@ -7,9 +7,33 @@ from app.schemas.health import (
     SystemHealthResponse,
     SingleComponentHealthResponse,
 )
+from app.schemas.auth import (
+    UserPublic,
+    LoginRequest,
+    LoginResponse,
+    RegisterRequest,
+    RefreshTokenRequest,
+    RefreshTokenResponse,
+    LogoutRequest,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    ResetPasswordRequest,
+    UserProfileUpdateRequest,
+)
 
 __all__ = [
     "ComponentStatus",
     "SystemHealthResponse",
     "SingleComponentHealthResponse",
+    "UserPublic",
+    "LoginRequest",
+    "LoginResponse",
+    "RegisterRequest",
+    "RefreshTokenRequest",
+    "RefreshTokenResponse",
+    "LogoutRequest",
+    "ForgotPasswordRequest",
+    "ForgotPasswordResponse",
+    "ResetPasswordRequest",
+    "UserProfileUpdateRequest",
 ]

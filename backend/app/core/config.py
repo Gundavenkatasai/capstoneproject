@@ -101,10 +101,16 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSION: int = 768
     DEFAULT_EMBEDDING_MODEL: str = "paraphrase-multilingual-mpnet-base-v2"
 
-    # Security (Tokens & Authentication placeholder for Phase 2)
+    # Security & Authentication Configuration
     SECRET_KEY: str = "dev_insecure_secret_key_civicmind_ai_replace_for_production_use"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Development Demo Account Credentials
+    DEMO_ADMIN_PASSWORD: str = "admin123"
+    DEMO_OFFICER_PASSWORD: str = "officer123"
+    DEMO_CITIZEN_PASSWORD: str = "citizen123"
+    PRINT_DEMO_CREDENTIALS: bool = True
 
 
 settings = Settings()
