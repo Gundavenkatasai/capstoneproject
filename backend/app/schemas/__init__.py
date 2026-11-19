@@ -22,6 +22,22 @@ from app.schemas.auth import (
     GoogleAuthRequest,
     GoogleAuthUrlResponse,
 )
+from app.schemas.grievance import (
+    GrievanceLocationSchema,
+    EvidenceResponse,
+    TimelineEventResponse,
+    ResolutionReportCreateRequest,
+    ResolutionReportResponse,
+    GrievanceCreateRequest,
+    GrievanceStatusTransitionRequest,
+    GrievanceReassignRequest,
+    CitizenResolutionVerifyRequest,
+    GrievanceAppealRequest,
+    GrievanceResponse,
+    GrievanceListResponse,
+    TriagePreviewRequest,
+    TriagePreviewResponse,
+)
 
 __all__ = [
     "ComponentStatus",
@@ -40,4 +56,18 @@ __all__ = [
     "UserProfileUpdateRequest",
     "GoogleAuthRequest",
     "GoogleAuthUrlResponse",
+    "GrievanceLocationSchema",
+    "EvidenceResponse",
+    "TimelineEventResponse",
+    "ResolutionReportCreateRequest",
+    "ResolutionReportResponse",
+    "GrievanceCreateRequest",
+    "GrievanceStatusTransitionRequest",
+    "GrievanceReassignRequest",
+    "CitizenResolutionVerifyRequest",
+    "GrievanceAppealRequest",
+    "GrievanceResponse",
+    "GrievanceListResponse",
+    "TriagePreviewRequest",
+    "TriagePreviewResponse",
 ]

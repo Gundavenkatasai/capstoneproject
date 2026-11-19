@@ -62,6 +62,18 @@ class User(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+
+    @property
+    def full_name(self) -> str:
+        return self.name
+
+    @property
+    def department_id(self) -> Optional[str]:
+        return self.officer_profile.department_id if self.officer_profile else None
+
+    @property
+    def phone_number(self) -> Optional[str]:
+        return self.phone
     grievances: Mapped[List["Grievance"]] = relationship(
         "Grievance",
         back_populates="citizen",

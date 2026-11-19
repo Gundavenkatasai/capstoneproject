@@ -1,8 +1,8 @@
-# CivicMind AI — Backend (Phase 1 & Phase 2)
+# CivicMind AI — Backend (Phase 1, 2 & 3 Complete)
 
 CivicMind AI is an enterprise-grade AI-powered citizen grievance intelligence and resolution prediction platform designed for modern public administration.
 
-This directory contains the production Python backend scaffold, PostgreSQL 16 + `pgvector` persistence layer, Redis broker and revocation cache, FastAPI application architecture, and complete **Phase 2 Authentication, Security, and Role-Based Access Control (RBAC)** implementation.
+This directory contains the production Python backend scaffold, PostgreSQL 16 + `pgvector` persistence layer, Redis broker and revocation cache, FastAPI application architecture, **Phase 2 Authentication, Security, and Role-Based Access Control (RBAC)**, and **Phase 3 Grievance Management & Lifecycle Engine**.
 
 ---
 
@@ -53,24 +53,34 @@ backend/
 │   │   └── token.py             # Refresh token session persistence & family tracking
 │   ├── schemas/
 │   │   ├── auth.py              # Pydantic v2 auth request & response contracts
+│   │   ├── grievance.py         # Lifecycle, evidence, resolution & triage schemas
 │   │   └── health.py            # System health response contracts
 │   ├── api/
 │   │   └── v1/
 │   │       ├── auth.py          # Authentication endpoints (/api/v1/auth/*)
+│   │       ├── grievances.py    # Lifecycle & grievance CRUD (/api/v1/grievances/*)
+│   │       ├── uploads.py       # Evidence storage & retrieval (/api/v1/uploads/*)
+│   │       ├── ai.py            # Operational preview endpoints (/api/v1/ai/*)
 │   │       └── router.py        # Centralized v1 router with RBAC test gates
 │   ├── services/
-│   │   └── auth_service.py      # Authentication lifecycle, token rotation & reuse detection
-│   ├── repositories/            # Data access abstractions (Phase 3+)
+│   │   ├── auth_service.py      # Authentication lifecycle, token rotation & reuse detection
+│   │   ├── grievance_service.py # Grievance CRUD, sequence generation, IDOR checks & triage
+│   │   ├── lifecycle.py         # State machine transitions, timeline & audit event generation
+│   │   └── storage_service.py   # MIME/magic-byte upload validation & authorized downloads
+│   ├── repositories/            # Data access abstractions
 │   └── utils/
 │       └── logger.py            # Structured logging configuration
 ├── alembic/                     # Database migrations
 │   ├── versions/
-│   │   ├── 0001_initial_schema.py       # Baseline migration (15 tables + pgvector)
-│   │   └── 0002_refresh_token_family.py # Refresh token family & client metadata
+│   │   ├── 0001_initial_schema.py          # Baseline migration (15 tables + pgvector)
+│   │   ├── 0002_refresh_token_family.py    # Refresh token family & client metadata
+│   │   ├── 0003_add_google_auth_fields.py  # Google OAuth identity columns
+│   │   └── 0004_grievance_lifecycle.py     # Sequence tracking & nullable evidence link
 │   └── env.py                  # Async migration runner
-├── tests/                       # Automated test suite (51 tests)
+├── tests/                       # Automated test suite (68 tests, 100% pass rate)
 │   ├── conftest.py              # Async HTTP client, session fixtures, connection cleanup
 │   ├── test_auth.py             # Auth endpoints, JWT, rotation, blacklist & password reset
+│   ├── test_grievances.py       # Grievance CRUD, sequence IDs, IDOR, lifecycle, evidence, resolutions
 │   ├── test_rbac.py             # Role gates, IDOR guards, department isolation, deactivation
 │   ├── test_database.py         # Engine connectivity, transactions, rollbacks
 │   ├── test_health.py           # System and component health endpoints

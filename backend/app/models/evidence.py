@@ -3,7 +3,7 @@ CivicMind AI — Grievance Multimedia Evidence Model
 """
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy import String, BigInteger, Text, DateTime, ForeignKey, CheckConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -29,10 +29,10 @@ class GrievanceEvidence(Base):
         primary_key=True,
         default=uuid.uuid4,
     )
-    grievance_id: Mapped[str] = mapped_column(
+    grievance_id: Mapped[Optional[str]] = mapped_column(
         String(30),
         ForeignKey("grievances.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     uploaded_by: Mapped[uuid.UUID] = mapped_column(

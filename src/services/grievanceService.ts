@@ -26,8 +26,12 @@ export const grievanceService = {
   async getAll(params?: GrievanceFilterParams): Promise<Grievance[]> {
     if (!USE_MOCK) {
       try {
-        const response = await apiClient.get<Grievance[]>("/grievances", { params });
-        return response.data;
+        const response = await apiClient.get<Grievance[] | { items: Grievance[]; total: number }>("/grievances", { params });
+        if (Array.isArray(response.data)) {
+          return response.data;
+        } else if (response.data && Array.isArray((response.data as any).items)) {
+          return (response.data as any).items;
+        }
       } catch (err) {
         console.warn("API request failed, falling back to local dataset:", err);
       }
@@ -87,6 +91,31 @@ export const grievanceService = {
   },
 
   async create(newGrievanceData: Partial<Grievance>): Promise<Grievance> {
+    if (!USE_MOCK) {
+      try {
+        const payload = {
+          title: newGrievanceData.title,
+          description: newGrievanceData.description,
+          category: newGrievanceData.category || "Road Infrastructure",
+          subcategory: newGrievanceData.subcategory || "Other Civic Issue",
+          department_id: newGrievanceData.departmentId || "PWD-RDS",
+          priority: newGrievanceData.priority || "medium",
+          address: newGrievanceData.location?.address || "Civic Center District, Delhi",
+          ward: newGrievanceData.location?.ward || "Ward 14",
+          zone: newGrievanceData.location?.zone || "Central Zone",
+          latitude: newGrievanceData.location?.lat || 28.6139,
+          longitude: newGrievanceData.location?.lng || 77.209,
+          is_anonymous: Boolean(newGrievanceData.isAnonymous),
+          language: newGrievanceData.language || "en",
+        };
+        const response = await apiClient.post<Grievance>("/grievances", payload);
+        localGrievances.unshift(response.data);
+        return response.data;
+      } catch (err) {
+        console.warn("API request failed, falling back to local creation:", err);
+      }
+    }
+
     const id = `GRV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date().toISOString();
 
@@ -154,6 +183,21 @@ export const grievanceService = {
     notes?: string,
     actor = "Officer"
   ): Promise<Grievance | null> {
+    if (!USE_MOCK) {
+      try {
+        const response = await apiClient.patch<Grievance>(`/grievances/${id}/status`, {
+          status,
+          notes,
+        });
+        const updated = response.data;
+        const idx = localGrievances.findIndex((g) => g.id === id);
+        if (idx !== -1) localGrievances[idx] = updated;
+        return updated;
+      } catch (err) {
+        console.warn("API status update failed, updating local dataset:", err);
+      }
+    }
+
     const item = localGrievances.find((g) => g.id === id);
     if (!item) return null;
 
@@ -179,6 +223,21 @@ export const grievanceService = {
     reason: string,
     actor = "Admin"
   ): Promise<Grievance | null> {
+    if (!USE_MOCK) {
+      try {
+        const response = await apiClient.post<Grievance>(`/grievances/${id}/assign`, {
+          department_id: newDepartmentId,
+          reason,
+        });
+        const updated = response.data;
+        const idx = localGrievances.findIndex((g) => g.id === id);
+        if (idx !== -1) localGrievances[idx] = updated;
+        return updated;
+      } catch (err) {
+        console.warn("API reassign failed, updating local dataset:", err);
+      }
+    }
+
     const item = localGrievances.find((g) => g.id === id);
     if (!item) return null;
 
@@ -204,6 +263,21 @@ export const grievanceService = {
     report: { text: string; officerEvidence: string[] },
     actor = "Field Officer"
   ): Promise<Grievance | null> {
+    if (!USE_MOCK) {
+      try {
+        const response = await apiClient.post<Grievance>(`/grievances/${id}/resolve`, {
+          report_text: report.text,
+          officer_evidence_urls: report.officerEvidence || [],
+        });
+        const updated = response.data;
+        const idx = localGrievances.findIndex((g) => g.id === id);
+        if (idx !== -1) localGrievances[idx] = updated;
+        return updated;
+      } catch (err) {
+        console.warn("API resolution failed, updating local dataset:", err);
+      }
+    }
+
     const item = localGrievances.find((g) => g.id === id);
     if (!item) return null;
 
@@ -236,6 +310,22 @@ export const grievanceService = {
     feedback?: { rating?: number; comment?: string },
     actor = "Citizen"
   ): Promise<Grievance | null> {
+    if (!USE_MOCK) {
+      try {
+        const response = await apiClient.post<Grievance>(`/grievances/${id}/verify`, {
+          rating: feedback?.rating || 5,
+          comment: feedback?.comment,
+          action: approved ? "accept" : "reject",
+        });
+        const updated = response.data;
+        const idx = localGrievances.findIndex((g) => g.id === id);
+        if (idx !== -1) localGrievances[idx] = updated;
+        return updated;
+      } catch (err) {
+        console.warn("API verify resolution failed, updating local dataset:", err);
+      }
+    }
+
     const item = localGrievances.find((g) => g.id === id);
     if (!item) return null;
 
@@ -269,6 +359,44 @@ export const grievanceService = {
     }
 
     item.updatedAt = new Date().toISOString();
+    return mockDelay({ ...item }, 200);
+  },
+
+  async submitAppeal(
+    id: string,
+    reason: string,
+    evidenceFileIds?: string[]
+  ): Promise<Grievance | null> {
+    if (!USE_MOCK) {
+      try {
+        const response = await apiClient.post<Grievance>(`/grievances/${id}/appeal`, {
+          reason,
+          evidence_file_ids: evidenceFileIds || [],
+        });
+        const updated = response.data;
+        const idx = localGrievances.findIndex((g) => g.id === id);
+        if (idx !== -1) localGrievances[idx] = updated;
+        return updated;
+      } catch (err) {
+        console.warn("API appeal failed, updating local dataset:", err);
+      }
+    }
+
+    const item = localGrievances.find((g) => g.id === id);
+    if (!item) return null;
+
+    item.status = "reopened";
+    item.updatedAt = new Date().toISOString();
+    item.timeline.push({
+      id: `tl_${Date.now()}`,
+      status: "reopened",
+      title: "Citizen Appeal Lodged",
+      description: reason,
+      timestamp: new Date().toISOString(),
+      actor: "Citizen",
+      actorRole: "Citizen Appeal",
+      notes: reason,
+    });
     return mockDelay({ ...item }, 200);
   },
 
