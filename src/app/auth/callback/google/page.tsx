@@ -33,7 +33,7 @@ function GoogleCallbackContent() {
       try {
         setStatusText("Exchanging security token and provisioning citizen session...");
         const redirectUri = `${window.location.origin}/auth/callback/google`;
-        await loginWithGoogle({ code, redirect_uri: redirectUri });
+        await loginWithGoogle({ code: code || undefined, redirect_uri: redirectUri });
 
         if (!isMounted) return;
         setStatusText("Session verified. Redirecting to workspace...");
