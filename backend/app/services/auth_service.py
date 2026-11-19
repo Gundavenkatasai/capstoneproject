@@ -5,12 +5,16 @@ session blacklisting, password reset token single-use mechanics, and security au
 """
 
 import uuid
-from typing import Optional
+import urllib.parse
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone, timedelta
+import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 
 from app.core.config import settings
 from app.core.security import (
@@ -37,6 +41,8 @@ from app.schemas.auth import (
     RefreshTokenResponse,
     ForgotPasswordResponse,
     UserProfileUpdateRequest,
+    GoogleAuthRequest,
+    GoogleAuthUrlResponse,
 )
 
 
@@ -56,6 +62,7 @@ def _serialize_user(user: User) -> UserPublic:
         ward=user.ward,
         avatar=user.avatar_url,
         badge=user.badge,
+        auth_provider=getattr(user, "auth_provider", "local"),
     )
 
 
@@ -545,3 +552,227 @@ async def update_user_profile(
     await db.commit()
     await db.refresh(current_user)
     return _serialize_user(current_user)
+
+
+# ==============================================================================
+# Google OAuth2 Authentication & Account Auto-Provisioning
+# ==============================================================================
+
+async def verify_google_identity(data: GoogleAuthRequest) -> Dict[str, Any]:
+    """
+    Verifies a Google ID token or exchanges a Google Authorization Code.
+    Returns the validated profile dictionary containing email, sub, name, and picture.
+    """
+    token = data.id_token or data.credential
+
+    # If code was submitted (from redirect flow), exchange for tokens
+    if data.code:
+        redirect_uri = data.redirect_uri or settings.GOOGLE_REDIRECT_URI
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                token_resp = await client.post(
+                    "https://oauth2.googleapis.com/token",
+                    data={
+                        "code": data.code,
+                        "client_id": settings.GOOGLE_CLIENT_ID,
+                        "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                        "redirect_uri": redirect_uri,
+                        "grant_type": "authorization_code",
+                    },
+                )
+                if token_resp.status_code != 200:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Failed to exchange Google authorization code: {token_resp.text}",
+                    )
+                token_data = token_resp.json()
+                token = token_data.get("id_token")
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Network error connecting to Google token endpoint: {e}",
+                )
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google id_token, credential, or authorization code must be provided.",
+        )
+
+    # 1. Attempt verification with official google-auth library
+    id_info: Optional[Dict[str, Any]] = None
+    verification_error = None
+    try:
+        id_info = google_id_token.verify_oauth2_token(
+            token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except Exception as e:
+        verification_error = e
+
+    # 2. If google-auth verification failed or certificates needed online check, query tokeninfo
+    if not id_info:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                resp = await client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={token}")
+                if resp.status_code == 200:
+                    data_json = resp.json()
+                    # Check audience match
+                    if data_json.get("aud") != settings.GOOGLE_CLIENT_ID:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Google token audience (aud) does not match configured Client ID.",
+                        )
+                    id_info = data_json
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail=f"Invalid or expired Google token ({verification_error or resp.text}).",
+                    )
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Unable to reach Google verification service: {e}",
+                )
+
+    if not id_info or not id_info.get("email"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google identity profile does not contain a verified email address.",
+        )
+
+    return id_info
+
+
+async def login_with_google(
+    db: AsyncSession,
+    data: GoogleAuthRequest,
+    client_ip: str = "127.0.0.1",
+    user_agent: Optional[str] = None,
+) -> LoginResponse:
+    """
+    Authenticate user via Google identity, auto-provisioning citizen accounts
+    if this is their initial sign-in, and issuing standard JWT access + refresh tokens.
+    """
+    id_info = await verify_google_identity(data)
+
+    email = id_info["email"].lower().strip()
+    google_id = str(id_info.get("sub", ""))
+    name = id_info.get("name") or email.split("@")[0]
+    picture = id_info.get("picture")
+
+    # 1. Query for existing user matching either google_id or email
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.officer_profile))
+        .where((User.google_id == google_id) | (User.email == email))
+    )
+    user = result.scalar_one_or_none()
+
+    if user:
+        # Check active status
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This account has been deactivated. Please contact an administrator.",
+            )
+
+        # Link google_id if account was originally registered locally
+        if not user.google_id:
+            user.google_id = google_id
+        if not user.avatar_url and picture:
+            user.avatar_url = picture
+    else:
+        # 2. Auto-provision new citizen account with Google provider
+        new_user_id = uuid.uuid4()
+        user = User(
+            id=new_user_id,
+            name=name,
+            email=email,
+            password_hash=get_password_hash(generate_secure_random_token(32)),
+            role="citizen",
+            auth_provider="google",
+            google_id=google_id,
+            avatar_url=picture,
+            is_active=True,
+        )
+        db.add(user)
+
+    # 3. Issue access token
+    access_token_str, expire_dt = create_access_token(
+        user_id=user.id,
+        role=user.role,
+        email=user.email,
+        name=user.name,
+    )
+    expires_in_sec = int((expire_dt - datetime.now(timezone.utc)).total_seconds())
+
+    # 4. Issue rotating refresh token
+    raw_refresh_token = generate_secure_random_token(48)
+    refresh_hash = hash_token(raw_refresh_token)
+    refresh_expire_dt = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    refresh_token_record = RefreshToken(
+        id=uuid.uuid4(),
+        user_id=user.id,
+        token_hash=refresh_hash,
+        family_id=uuid.uuid4(),
+        expires_at=refresh_expire_dt,
+        is_revoked=False,
+        user_agent=user_agent[:255] if user_agent else None,
+        ip_address=client_ip[:50] if client_ip else "127.0.0.1",
+    )
+    db.add(refresh_token_record)
+
+    # 5. Security audit logging
+    audit_entry = AuditLog(
+        id=uuid.uuid4(),
+        action="USER_LOGIN_GOOGLE",
+        entity_type="user",
+        entity_id=str(user.id),
+        performed_by=user.name,
+        user_role=user.role,
+        details=f"User authenticated via Google Identity (Google ID: {google_id}) from IP: {client_ip}",
+        ip_address=client_ip[:50] if client_ip else "127.0.0.1",
+    )
+    db.add(audit_entry)
+
+    await db.commit()
+    await db.refresh(user)
+
+    user_public = _serialize_user(user)
+
+    return LoginResponse(
+        token=access_token_str,
+        access_token=access_token_str,
+        refresh_token=raw_refresh_token,
+        token_type="bearer",
+        expires_in=expires_in_sec,
+        user=user_public,
+    )
+
+
+def get_google_auth_url(redirect_uri: Optional[str] = None) -> GoogleAuthUrlResponse:
+    """
+    Constructs the standard Google OAuth2 authorization redirect URL.
+    """
+    target_uri = redirect_uri or settings.GOOGLE_REDIRECT_URI
+    params = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "redirect_uri": target_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account",
+    }
+    query_str = urllib.parse.urlencode(params)
+    return GoogleAuthUrlResponse(
+        auth_url=f"https://accounts.google.com/o/oauth2/v2/auth?{query_str}",
+        client_id=settings.GOOGLE_CLIENT_ID,
+    )
+

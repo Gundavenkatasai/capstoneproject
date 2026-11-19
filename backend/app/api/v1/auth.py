@@ -24,6 +24,8 @@ from app.schemas.auth import (
     ForgotPasswordResponse,
     ResetPasswordRequest,
     UserProfileUpdateRequest,
+    GoogleAuthRequest,
+    GoogleAuthUrlResponse,
 )
 from app.services import auth_service
 
@@ -169,3 +171,39 @@ async def reset_password(
     client_ip = _extract_client_ip(request)
     await auth_service.reset_password(db, data.token, data.new_password, client_ip=client_ip)
     return {"message": "Password has been successfully updated. Please log in with your new password."}
+
+
+# ==============================================================================
+# Google OAuth2 Authentication Endpoints
+# ==============================================================================
+
+@router.get(
+    "/google/url",
+    response_model=GoogleAuthUrlResponse,
+    summary="Get Google OAuth2 Authorization URL",
+    description="Constructs and returns the official Google OAuth2 sign-in redirect URL for web clients.",
+)
+async def get_google_auth_url(redirect_uri: Optional[str] = None) -> GoogleAuthUrlResponse:
+    return auth_service.get_google_auth_url(redirect_uri=redirect_uri)
+
+
+@router.post(
+    "/google",
+    response_model=LoginResponse,
+    summary="Authenticate or Register via Google Identity",
+    description=(
+        "Authenticates a user via Google Identity Services. Accepts either an ID token / credential "
+        "or an authorization code from the redirect flow. Auto-provisions a citizen account if new."
+    ),
+)
+async def login_google(
+    payload: GoogleAuthRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> LoginResponse:
+    client_ip = _extract_client_ip(request)
+    user_agent = request.headers.get("user-agent")
+    return await auth_service.login_with_google(
+        db, payload, client_ip=client_ip, user_agent=user_agent
+    )
+

@@ -17,6 +17,7 @@ class UserPublic(BaseModel):
     ward: Optional[str] = Field(None, description="Residential or assigned administrative ward")
     avatar: Optional[str] = Field(None, description="Profile avatar picture URI")
     badge: Optional[str] = Field(None, description="Designation badge or resident tier")
+    auth_provider: Optional[str] = Field("local", description="Authentication provider (local, google)")
 
     class Config:
         from_attributes = True
@@ -104,3 +105,16 @@ class UserProfileUpdateRequest(BaseModel):
     phone: Optional[str] = Field(None, max_length=25)
     ward: Optional[str] = Field(None, max_length=100)
     avatar_url: Optional[str] = Field(None)
+
+
+class GoogleAuthRequest(BaseModel):
+    id_token: Optional[str] = Field(None, description="Google OpenID Connect JWT ID token")
+    credential: Optional[str] = Field(None, description="Alias for id_token from Google Identity Services")
+    code: Optional[str] = Field(None, description="Authorization code from OAuth2 redirect flow")
+    redirect_uri: Optional[str] = Field(None, description="Redirect URI passed in authorization request")
+
+
+class GoogleAuthUrlResponse(BaseModel):
+    auth_url: str = Field(..., description="Google OAuth2 authorization URL")
+    client_id: str = Field(..., description="Configured Google Client ID")
+

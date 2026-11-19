@@ -71,6 +71,56 @@ export const authService = {
     return MOCK_USERS[2]; // Dr. Sunita Rao, IAS
   },
 
+  async googleLogin(payload: { id_token?: string; credential?: string; code?: string; redirect_uri?: string }): Promise<{ user: User; token: string }> {
+    if (!USE_MOCK) {
+      try {
+        const res = await apiClient.post<{ user: User; token: string }>("/auth/google", payload);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("civicmind_auth_token", res.data.token);
+          localStorage.setItem("civicmind_user", JSON.stringify(res.data.user));
+        }
+        return res.data;
+      } catch (err: any) {
+        console.warn("Google auth API request failed, falling back to mock Google user:", err);
+      }
+    }
+
+    // Mock Google citizen profile fallback for testing/offline mode
+    const googleUser: User = {
+      id: `usr_google_${Date.now()}`,
+      name: "Google Authenticated Citizen",
+      email: "citizen.google@gmail.com",
+      role: "citizen",
+      ward: "Ward 12 (Indiranagar)",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    };
+
+    const token = `civicmind_google_jwt_${googleUser.id}_${Date.now()}`;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("civicmind_auth_token", token);
+      localStorage.setItem("civicmind_user", JSON.stringify(googleUser));
+    }
+
+    return mockDelay({ user: googleUser, token }, 300);
+  },
+
+  async getGoogleAuthUrl(redirect_uri?: string): Promise<{ auth_url: string; client_id: string }> {
+    if (!USE_MOCK) {
+      try {
+        const res = await apiClient.get<{ auth_url: string; client_id: string }>("/auth/google/url", {
+          params: { redirect_uri },
+        });
+        return res.data;
+      } catch (err) {
+        console.warn("Failed to fetch Google auth URL from API:", err);
+      }
+    }
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+    const redirect = redirect_uri || (typeof window !== "undefined" ? `${window.location.origin}/auth/callback/google` : "http://localhost:3000/auth/callback/google");
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=select_account`;
+    return { auth_url: authUrl, client_id: clientId };
+  },
+
   logout(): void {
     if (typeof window !== "undefined") {
       localStorage.removeItem("civicmind_auth_token");

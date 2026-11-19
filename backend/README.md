@@ -18,6 +18,7 @@ This directory contains the production Python backend scaffold, PostgreSQL 16 + 
 - **Redis 7** (Broker, token revocation blacklist, and rate-limiting cache)
 - **Argon2id** (`argon2-cffi` cryptographic password hashing)
 - **PyJWT** (HMAC-SHA256 signed JWT tokens with standard RFC claims)
+- **Google OAuth2 / Identity Services** (`google-auth`, tokeninfo verification, code exchange)
 - **Docker & Docker Compose**
 - **pytest & pytest-asyncio** (Comprehensive automated test suite)
 
@@ -193,6 +194,8 @@ Interactive documentation is available at:
 | `PUT` | `/api/v1/auth/me` | `UserProfileUpdateRequest` | `UserPublic` | Bearer Token | Update authenticated user profile |
 | `POST` | `/api/v1/auth/forgot-password` | `ForgotPasswordRequest` | `ForgotPasswordResponse` | No | Request password reset token |
 | `POST` | `/api/v1/auth/reset-password` | `ResetPasswordRequest` | Status message | No | Consume single-use token and update Argon2id hash |
+| `GET` | `/api/v1/auth/google/url` | None | `GoogleAuthUrlResponse` | No | Fetch official Google OAuth2 sign-in redirect URL |
+| `POST` | `/api/v1/auth/google` | `GoogleAuthRequest` | `LoginResponse` | No | Authenticate or auto-provision citizen account via Google Identity |
 
 ### System & RBAC Health Gates
 | Method | Endpoint | Auth Required | Required Role | Description |
@@ -209,7 +212,7 @@ Interactive documentation is available at:
 
 ## 6. Running Automated Tests
 
-Run the complete test suite (51 tests):
+Run the complete test suite (57 tests):
 ```bash
 pytest tests/ -v
 ```
@@ -220,6 +223,6 @@ pytest tests/ --cov=app --cov-report=term-missing
 ```
 
 ### Test Suite Summary
-- **51 passing tests** across 10 test modules.
-- **85% statement coverage** across the entire application codebase.
+- **57 passing tests** across 10 test modules.
+- **84% statement coverage** across the entire application codebase.
 - Covers: database connectivity, ORM entities, pgvector HNSW indexing, Redis caching, migrations, registration, login rate limiting, JWT validation, refresh token rotation, refresh reuse detection, token blacklisting, password reset lifecycle, profile updates, RBAC role gates, IDOR guards, and department jurisdiction silos.

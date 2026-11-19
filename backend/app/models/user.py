@@ -40,6 +40,8 @@ class User(Base):
     ward: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     avatar_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     badge: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    auth_provider: Mapped[str] = mapped_column(String(50), default="local", nullable=False)
+    google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, index=True, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -8,6 +8,7 @@ import { UserRole } from "@/types";
 import { MOCK_USERS } from "@/mocks/mockData";
 import { Eye, EyeOff, Shield, ArrowRight, CheckCircle2, Lock, Sparkles, Building, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -80,6 +81,22 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+
+          {/* Google Single Sign-On */}
+          <div className="mb-4">
+            <GoogleSignInButton label="Continue with Google" />
+          </div>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200/90" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase">
+              <span className="bg-white px-2.5 text-slate-400 font-mono font-semibold tracking-wider">
+                Or sign in with official credentials
+              </span>
+            </div>
+          </div>
 
           {/* Role Tabs */}
           <div className="mb-5">

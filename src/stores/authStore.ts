@@ -11,6 +11,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   switchRole: (role: UserRole) => void;
   login: (creds: LoginCredentials) => Promise<void>;
+  loginWithGoogle: (payload: { id_token?: string; credential?: string; code?: string; redirect_uri?: string }) => Promise<void>;
   logout: () => void;
   initAuth: () => Promise<void>;
 }
@@ -41,6 +42,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     try {
       const res = await authService.login(creds);
+      set({ user: res.user, role: res.user.role, isAuthenticated: true, isLoading: false });
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
+  },
+
+  loginWithGoogle: async (payload) => {
+    set({ isLoading: true });
+    try {
+      const res = await authService.googleLogin(payload);
       set({ user: res.user, role: res.user.role, isAuthenticated: true, isLoading: false });
     } catch (err) {
       set({ isLoading: false });

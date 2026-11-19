@@ -106,6 +106,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Google OAuth2 Configuration
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "http://localhost:3000/auth/callback/google"
+
     # Development Demo Account Credentials
     DEMO_ADMIN_PASSWORD: str = "admin123"
     DEMO_OFFICER_PASSWORD: str = "officer123"

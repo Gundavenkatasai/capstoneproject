@@ -19,6 +19,8 @@ from app.schemas.auth import (
     ForgotPasswordResponse,
     ResetPasswordRequest,
     UserProfileUpdateRequest,
+    GoogleAuthRequest,
+    GoogleAuthUrlResponse,
 )
 
 __all__ = [
@@ -36,4 +38,6 @@ __all__ = [
     "ForgotPasswordResponse",
     "ResetPasswordRequest",
     "UserProfileUpdateRequest",
+    "GoogleAuthRequest",
+    "GoogleAuthUrlResponse",
 ]

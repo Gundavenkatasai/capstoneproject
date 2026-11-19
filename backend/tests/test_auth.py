@@ -468,3 +468,132 @@ async def test_update_user_profile(client: AsyncClient, db_session: AsyncSession
     assert profile["name"] == update_payload["name"]
     assert profile["phone"] == update_payload["phone"]
     assert profile["ward"] == update_payload["ward"]
+
+
+# ==============================================================================
+# Google Authentication Test Cases
+# ==============================================================================
+
+@pytest.mark.asyncio
+async def test_get_google_auth_url(client: AsyncClient):
+    """Verify GET /api/v1/auth/google/url returns the valid Google OAuth2 authorization URL."""
+    resp = await client.get("/api/v1/auth/google/url")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "auth_url" in data
+    assert "client_id" in data
+    assert settings.GOOGLE_CLIENT_ID in data["auth_url"]
+    assert "accounts.google.com/o/oauth2/v2/auth" in data["auth_url"]
+    assert "response_type=code" in data["auth_url"]
+
+
+@pytest.mark.asyncio
+async def test_google_login_missing_payload(client: AsyncClient):
+    """Verify POST /api/v1/auth/google without token or code returns 400."""
+    resp = await client.post("/api/v1/auth/google", json={})
+    assert resp.status_code == 400
+    assert "must be provided" in resp.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_google_login_invalid_token(client: AsyncClient):
+    """Verify POST /api/v1/auth/google with forged/malformed token returns 401."""
+    resp = await client.post("/api/v1/auth/google", json={"id_token": "forged_google_token_12345"})
+    assert resp.status_code in (401, 502)
+
+
+@pytest.mark.asyncio
+async def test_google_login_new_user_provisioning(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    monkeypatch,
+):
+    """Verify new Google user is automatically provisioned with citizen role and returns tokens."""
+    from app.services import auth_service
+
+    test_google_email = "new.google.citizen@civicmind.gov"
+    test_google_sub = "google_sub_987654321"
+
+    # Clean up previous run if any
+    existing = await db_session.execute(
+        select(User).where(User.email == test_google_email)
+    )
+    u = existing.scalar_one_or_none()
+    if u:
+        await db_session.delete(u)
+        await db_session.commit()
+
+    # Mock verify_google_identity to simulate verified Google token
+    async def mock_verify(data):
+        return {
+            "email": test_google_email,
+            "sub": test_google_sub,
+            "name": "Dr. Google Resident",
+            "picture": "https://lh3.googleusercontent.com/a/mock-pic",
+            "email_verified": True,
+        }
+
+    monkeypatch.setattr(auth_service, "verify_google_identity", mock_verify)
+
+    resp = await client.post(
+        "/api/v1/auth/google",
+        json={"id_token": "mock_valid_google_token"},
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+
+    assert data["token_type"] == "bearer"
+    assert len(data["token"]) > 20
+    assert len(data["refresh_token"]) > 20
+    assert data["user"]["email"] == test_google_email
+    assert data["user"]["role"] == "citizen"
+    assert data["user"]["name"] == "Dr. Google Resident"
+    assert data["user"]["auth_provider"] == "google"
+
+    # Verify user exists in database with google_id
+    result = await db_session.execute(
+        select(User).where(User.email == test_google_email)
+    )
+    db_user = result.scalar_one()
+    assert db_user.google_id == test_google_sub
+    assert db_user.auth_provider == "google"
+
+
+@pytest.mark.asyncio
+async def test_google_login_existing_user_linking(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    monkeypatch,
+):
+    """Verify existing local user signing in with matching Google email links google_id."""
+    from app.services import auth_service
+
+    target_email = "citizen@civicmind.gov"
+    google_sub = "google_sub_existing_citizen_999"
+
+    async def mock_verify(data):
+        return {
+            "email": target_email,
+            "sub": google_sub,
+            "name": "Citizen Vikram Rao",
+            "picture": "https://lh3.googleusercontent.com/vikram",
+            "email_verified": True,
+        }
+
+    monkeypatch.setattr(auth_service, "verify_google_identity", mock_verify)
+
+    resp = await client.post(
+        "/api/v1/auth/google",
+        json={"id_token": "mock_google_token"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["user"]["email"] == target_email
+
+    # Check google_id is linked in database
+    result = await db_session.execute(
+        select(User).where(User.email == target_email)
+    )
+    user = result.scalar_one()
+    assert user.google_id == google_sub
+
