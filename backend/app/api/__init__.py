@@ -1,0 +1,3 @@
+"""
+CivicMind AI — API Module
+"""

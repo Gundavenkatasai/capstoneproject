@@ -36,3 +36,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+# Python & Backend
+backend/.venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+backend/.env
+.env
+*.egg-info/
+dist/
+
+# Database & Docker volumes
+postgres_data/
+redis_data/
