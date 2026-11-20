@@ -215,6 +215,14 @@ def process_grievance_lifecycle_event_task(
             correlation_id=correlation_id,
         )
 
+    # Trigger ML 768-dim embedding generation & duplicate scan for submitted grievances
+    if "submitted" in event_type.lower():
+        try:
+            from app.tasks.ml import generate_grievance_embedding_task
+            generate_grievance_embedding_task.delay(grievance_id=grievance_id)
+        except Exception as ex:
+            logger.warning("[OUTBOX_ML_EMBEDDING_DISPATCH_WARN] grievance_id=%s error=%s", grievance_id, str(ex))
+
     return {
         "status": "processed",
         "event_type": event_type,

@@ -521,7 +521,7 @@ async def test_reassignment_workflow(client: AsyncClient, setup_grievance_fixtur
 
 @pytest.mark.asyncio
 async def test_ai_triage_preview_endpoint(client: AsyncClient):
-    """Verify deterministic rule-based triage preview endpoint."""
+    """Verify triage preview endpoint with ML model or deterministic fallback."""
     response = await client.post(
         "/api/v1/ai/triage-preview",
         json={
@@ -532,6 +532,6 @@ async def test_ai_triage_preview_endpoint(client: AsyncClient):
     assert response.status_code == 200
     data = response.json()
     assert data["predictedCategory"] == "Road Infrastructure"
-    assert data["suggestedDepartmentId"] == "PWD-RDS"
-    assert data["isMockFallback"] is True
+    assert data["suggestedDepartmentId"] in ("PWD-RDS", "dept_pwd")
+    assert "isMockFallback" in data
     assert "pothole" in data["keywordsMatched"] or "road" in data["keywordsMatched"]

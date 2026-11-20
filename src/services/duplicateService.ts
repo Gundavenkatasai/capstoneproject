@@ -51,4 +51,30 @@ export const duplicateService = {
     const list = MOCK_GRIEVANCES.filter((g) => cluster.grievanceIds.includes(g.id));
     return mockDelay(list, 100);
   },
+
+  async searchSemanticDuplicates(params: {
+    grievance_id?: string;
+    title?: string;
+    description?: string;
+    latitude?: number;
+    longitude?: number;
+    category?: string;
+  }) {
+    if (!USE_MOCK) {
+      try {
+        const res = await apiClient.post("/ai/duplicates", params);
+        return res.data;
+      } catch (e) {
+        console.warn("Falling back to local duplicate search", e);
+      }
+    }
+    return mockDelay(
+      {
+        matches: [],
+        total_found: 0,
+        search_vector_dimension: 768,
+      },
+      150
+    );
+  },
 };

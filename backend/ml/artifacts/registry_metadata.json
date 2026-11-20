@@ -1,0 +1,75 @@
+{
+  "registry_version": "1.0.0",
+  "last_trained_at": "2026-11-20T13:58:44.195781+00:00",
+  "training_dataset": "benchmark_research_v1",
+  "readiness_status": "insufficient_production_data",
+  "production_audit": {
+    "total_grievances": 12,
+    "resolved_count": 0,
+    "sla_breached_count": 0,
+    "is_ready": false,
+    "reason": "Insufficient sample count (12 < 50). Production system is in early cold-start stage.",
+    "source": "postgres_operational_insufficient"
+  },
+  "models": {
+    "category_classifier": {
+      "version": "v1.0.0-benchmark",
+      "algorithm": "TF-IDF + Calibrated Logistic Regression",
+      "metrics": {
+        "accuracy": 1.0,
+        "macro_f1": 1.0,
+        "weighted_f1": 1.0
+      },
+      "classes": [
+        "Encroachment & Town Planning",
+        "Health & Public Safety",
+        "Parks & Horticulture",
+        "Revenue & Property Tax",
+        "Road Infrastructure",
+        "Sanitation & Waste Management",
+        "Urban Electricity & Street Lighting",
+        "Water Supply & Drainage"
+      ]
+    },
+    "department_recommender": {
+      "version": "v1.0.0-benchmark",
+      "algorithm": "TF-IDF + Logistic Regression",
+      "classes": [
+        "dept_electricity",
+        "dept_health",
+        "dept_horticulture",
+        "dept_pwd",
+        "dept_sanitation",
+        "dept_wssb"
+      ]
+    },
+    "sentence_embedder": {
+      "version": "v1.0.0",
+      "model_name": "paraphrase-multilingual-mpnet-base-v2",
+      "dimension": 768
+    },
+    "resolution_regressor": {
+      "version": "v1.0.0-benchmark",
+      "algorithm": "HistGradientBoostingRegressor",
+      "metrics": {
+        "mae": 0.6093,
+        "rmse": 0.8601,
+        "median_ae": 0.4077,
+        "r2_score": 0.7453
+      }
+    },
+    "sla_classifier": {
+      "version": "v1.0.0-benchmark",
+      "algorithm": "Calibrated HistGradientBoostingClassifier",
+      "metrics": {
+        "accuracy": 0.85,
+        "precision": 0.6368,
+        "recall": 0.9846,
+        "f1_score": 0.7734,
+        "roc_auc": 0.957,
+        "pr_auc": 0.8858,
+        "brier_score": 0.0943
+      }
+    }
+  }
+}

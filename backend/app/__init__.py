@@ -2,6 +2,4 @@
 CivicMind AI — Application Package
 """
 
-from app.main import app
-
-__all__ = ["app"]
+__all__ = []

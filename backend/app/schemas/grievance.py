@@ -3,7 +3,7 @@ CivicMind AI — Grievance, Lifecycle, Evidence & Resolution Pydantic Schemas
 """
 
 import uuid
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 
@@ -248,3 +248,13 @@ class TriagePreviewResponse(BaseModel):
     isMockFallback: bool = True
     keywords_matched: List[str] = Field(default_factory=list)
     keywordsMatched: List[str] = Field(default_factory=list)
+    confidence_interval_low: Optional[float] = None
+    confidence_interval_high: Optional[float] = None
+    sla_breach_risk: Optional[str] = None
+    slaBreachRisk: Optional[str] = None
+    sla_breach_probability: Optional[float] = None
+    slaBreachProbability: Optional[float] = None
+    shap_factors: Optional[List[Dict[str, Any]]] = None
+    shapFactors: Optional[List[Dict[str, Any]]] = None
+    token_attributions: Optional[List[Dict[str, Any]]] = None
+    model_metadata: Optional[Dict[str, Any]] = None

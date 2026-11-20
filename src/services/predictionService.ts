@@ -163,4 +163,94 @@ export const predictionService = {
       150
     );
   },
+
+  async predictTriage(payload: { title: string; description: string; address?: string }) {
+    if (!USE_MOCK) {
+      try {
+        const res = await apiClient.post("/ai/triage-preview", payload);
+        return res.data;
+      } catch (e) {
+        console.warn("Falling back to local triage preview", e);
+      }
+    }
+    return mockDelay(
+      {
+        predictedCategory: "Road Infrastructure",
+        predictedSubcategory: "Potholes & Road Damage",
+        suggestedDepartmentId: "dept_pwd",
+        suggestedDepartmentName: "Public Works Department (PWD)",
+        priority: "high",
+        confidence: 0.92,
+        predictedDurationDays: 2.5,
+        isMockFallback: true,
+        keywordsMatched: ["road", "pothole"],
+      },
+      150
+    );
+  },
+
+  async getExplainability(grievanceId: string) {
+    if (!USE_MOCK) {
+      try {
+        const res = await apiClient.get(`/ai/explainability/${grievanceId}`);
+        return res.data;
+      } catch (e) {
+        console.warn("Falling back to local explainability", e);
+      }
+    }
+    return mockDelay(
+      {
+        grievance_id: grievanceId,
+        predicted_duration_days: 2.5,
+        sla_breach_probability: 0.35,
+        shap_factors: [
+          {
+            feature: "Priority: High",
+            weight: -0.85,
+            effect: "negative",
+            description: "High priority mobilization speeds up response time.",
+          },
+          {
+            feature: "Category: Road Infrastructure",
+            weight: 0.65,
+            effect: "positive",
+            description: "Requires heavy asphalt and roller equipment.",
+          },
+        ],
+        token_attributions: [
+          { token: "pothole", importance: 0.95, is_salient: true },
+          { token: "road", importance: 0.85, is_salient: true },
+        ],
+        explanation_summary: "Resolution time driven by priority and municipal equipment dependencies.",
+      },
+      150
+    );
+  },
+
+  async getModelHealth() {
+    if (!USE_MOCK) {
+      try {
+        const res = await apiClient.get("/ai/health");
+        return res.data;
+      } catch (e) {
+        console.warn("Falling back to model health mock", e);
+      }
+    }
+    return mockDelay(
+      {
+        status: "healthy",
+        is_initialized: true,
+        readiness_status: "insufficient_production_data",
+        models_loaded: {
+          category_classifier: true,
+          department_recommender: true,
+          sentence_embedder: true,
+          resolution_regressor: true,
+          sla_classifier: true,
+        },
+        embedding_dimension: 768,
+      },
+      100
+    );
+  },
 };

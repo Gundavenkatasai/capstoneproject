@@ -1,8 +1,8 @@
-# CivicMind AI — Backend (Phase 1, 2, 3 & 4 Complete)
+# CivicMind AI — Backend (Phase 1, 2, 3, 4 & 5 Complete)
 
 CivicMind AI is an enterprise-grade AI-powered citizen grievance intelligence and resolution prediction platform designed for modern public administration.
 
-This directory contains the production Python backend scaffold, PostgreSQL 16 + `pgvector` persistence layer, Redis broker and revocation cache, FastAPI application architecture, **Phase 2 Authentication, Security, and Role-Based Access Control (RBAC)**, **Phase 3 Grievance Management & Lifecycle Engine**, and **Phase 4 Background Processing Infrastructure & Distributed Task Engine**.
+This directory contains the production Python backend scaffold, PostgreSQL 16 + `pgvector` persistence layer, Redis broker and revocation cache, FastAPI application architecture, **Phase 2 Authentication, Security, and Role-Based Access Control (RBAC)**, **Phase 3 Grievance Management & Lifecycle Engine**, **Phase 4 Background Processing Infrastructure & Distributed Task Engine**, and **Phase 5 Machine Learning Intelligence & Inference Engine**.
 
 ---
 
@@ -11,6 +11,13 @@ This directory contains the production Python backend scaffold, PostgreSQL 16 + 
 - **Python 3.12+** (tested on 3.13)
 - **FastAPI** (ASGI web framework)
 - **Celery 5.7+** (Distributed asynchronous job queue & scheduler)
+- **Machine Learning & NLP Stack**:
+  - `scikit-learn 1.9+` (TF-IDF, calibrated classifiers, regression metrics)
+  - `lightgbm 4.7+` & `HistGradientBoosting` (Resolution time duration regression)
+  - `xgboost 3.4+` & calibrated classifiers (SLA breach risk prediction)
+  - `sentence-transformers 6.3+` & PyTorch (768-dimensional dense vector embeddings)
+  - `shap 0.54+` (TreeSHAP feature attributions and token-level lexical explainability)
+  - `joblib` & `cloudpickle` (Model artifact serialization and versioned registry)
 - **PostgreSQL 16** with **pgvector** (`0.8.7`)
 - **SQLAlchemy 2.0** (AsyncEngine, SyncEngine, AsyncSession, DeclarativeBase)
 - **Alembic** (Async database schema migrations)
@@ -21,7 +28,7 @@ This directory contains the production Python backend scaffold, PostgreSQL 16 + 
 - **PyJWT** (HMAC-SHA256 signed JWT tokens with standard RFC claims)
 - **Google OAuth2 / Identity Services** (`google-auth`, tokeninfo verification, code exchange)
 - **Docker & Docker Compose** (Full multi-container topology with API, Celery worker & Celery beat)
-- **pytest & pytest-asyncio** (Comprehensive automated test suite with 86 tests)
+- **pytest & pytest-asyncio** (Comprehensive automated test suite with **101 tests**, 100% pass rate)
 
 ---
 
