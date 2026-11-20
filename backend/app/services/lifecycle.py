@@ -13,6 +13,7 @@ from app.models.grievance import Grievance
 from app.models.timeline import GrievanceTimeline
 from app.models.audit import AuditLog
 from app.models.user import User
+from app.models.outbox import OutboxEvent
 
 
 # Valid lifecycle state transitions: from_status -> set of allowed to_statuses
@@ -141,5 +142,24 @@ class LifecycleService:
             ip_address=ip_address,
         )
         session.add(audit)
+
+        # Enqueue transactional outbox event atomically
+        outbox = OutboxEvent(
+            event_type="grievance.status_changed",
+            aggregate_type="grievance",
+            aggregate_id=grievance.id,
+            payload={
+                "grievance_id": grievance.id,
+                "tracking_id": grievance.id,
+                "title": grievance.title,
+                "old_status": old_status,
+                "new_status": target_status,
+                "actor_name": actor.full_name,
+                "actor_role": actor.role,
+                "notes": notes or event_desc,
+            },
+            correlation_id=f"grv-status-{grievance.id}-{target_status}",
+        )
+        session.add(outbox)
 
         return timeline_event

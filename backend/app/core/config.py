@@ -97,6 +97,31 @@ class Settings(BaseSettings):
             return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
+    # Celery Background Processing Configuration
+    CELERY_BROKER_URL: str | None = None
+    CELERY_RESULT_BACKEND: str | None = None
+    CELERY_TASK_ALWAYS_EAGER: bool = False
+    CELERY_WORKER_CONCURRENCY: int = 4
+    CELERY_TASK_TIME_LIMIT: int = 300
+    CELERY_TASK_SOFT_TIME_LIMIT: int = 240
+    CELERY_RESULT_EXPIRES: int = 86400
+
+    @property
+    def celery_broker(self) -> str:
+        if self.CELERY_BROKER_URL:
+            return self.CELERY_BROKER_URL
+        return self.redis_connection_url
+
+    @property
+    def celery_backend(self) -> str:
+        if self.CELERY_RESULT_BACKEND:
+            return self.CELERY_RESULT_BACKEND
+        return self.redis_connection_url
+
+    # Notifications & Background Maintenance
+    NOTIFICATION_PROVIDER: str = "logging"
+    EVIDENCE_CLEANUP_RETENTION_HOURS: int = 24
+
     # Vector & AI Model Dimensions
     EMBEDDING_DIMENSION: int = 768
     DEFAULT_EMBEDDING_MODEL: str = "paraphrase-multilingual-mpnet-base-v2"

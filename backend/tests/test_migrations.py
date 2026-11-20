@@ -12,13 +12,13 @@ async def test_alembic_version_table(db_session: AsyncSession):
     """Verify alembic_version table exists and tracks current revision."""
     result = await db_session.execute(text("SELECT version_num FROM alembic_version;"))
     rev = result.scalar()
-    assert rev in ("0001_initial_schema", "0002_refresh_token_family", "0003_add_google_auth_fields", "0004_grievance_lifecycle")
-    assert rev == "0004_grievance_lifecycle"
+    assert rev in ("0001_initial_schema", "0002_refresh_token_family", "0003_add_google_auth_fields", "0004_grievance_lifecycle", "0005_outbox_events")
+    assert rev == "0005_outbox_events"
 
 
 @pytest.mark.asyncio
 async def test_all_15_tables_exist_in_database(db_session: AsyncSession):
-    """Verify all 15 application tables exist in the PostgreSQL information_schema."""
+    """Verify all application tables exist in the PostgreSQL information_schema."""
     result = await db_session.execute(text("""
         SELECT table_name 
         FROM information_schema.tables 
@@ -42,6 +42,7 @@ async def test_all_15_tables_exist_in_database(db_session: AsyncSession):
         "knowledge_edges",
         "audit_logs",
         "refresh_tokens",
+        "outbox_events",
     }
 
     assert expected_tables.issubset(existing_tables)
@@ -90,5 +91,27 @@ async def test_migration_0004_grievance_lifecycle(db_session: AsyncSession):
     """))
     is_nullable = col_result.scalar()
     assert is_nullable == "YES"
+
+
+@pytest.mark.asyncio
+async def test_migration_0005_outbox_events(db_session: AsyncSession):
+    """Verify migration 0005 created outbox_events table with all required columns."""
+    result = await db_session.execute(text("""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'outbox_events';
+    """))
+    cols = {row[0] for row in result.fetchall()}
+    assert "id" in cols
+    assert "event_type" in cols
+    assert "aggregate_type" in cols
+    assert "aggregate_id" in cols
+    assert "payload" in cols
+    assert "status" in cols
+    assert "attempts" in cols
+    assert "max_attempts" in cols
+    assert "correlation_id" in cols
+    assert "scheduled_for" in cols
+    assert "processed_at" in cols
 
 

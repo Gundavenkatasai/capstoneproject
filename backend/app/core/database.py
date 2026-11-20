@@ -2,15 +2,17 @@
 CivicMind AI — Asynchronous SQLAlchemy 2.0 Database Session Manager
 """
 
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Generator
+from contextlib import contextmanager
 import logging
+from sqlalchemy import text, create_engine, Engine
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy import text
 from app.core.config import settings
 
 logger = logging.getLogger("civicmind.database")
@@ -33,6 +35,42 @@ AsyncSessionFactory = async_sessionmaker(
     autoflush=False,
     autocommit=False,
 )
+
+# Initialize synchronous engine for Celery background tasks & management scripts
+sync_engine: Engine = create_engine(
+    settings.sync_database_url,
+    echo=settings.DEBUG and settings.ENVIRONMENT == "development_verbose",
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+    future=True,
+)
+
+# Sync session factory
+SyncSessionFactory = sessionmaker(
+    bind=sync_engine,
+    class_=Session,
+    expire_on_commit=False,
+    autoflush=False,
+    autocommit=False,
+)
+
+
+@contextmanager
+def get_sync_db() -> Generator[Session, None, None]:
+    """
+    Context manager delivering transactional synchronous database sessions
+    for Celery tasks and background scripts.
+    """
+    session = SyncSessionFactory()
+    try:
+        yield session
+    except Exception as ex:
+        session.rollback()
+        logger.error("Sync database transaction rolled back: %s", ex)
+        raise
+    finally:
+        session.close()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

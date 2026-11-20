@@ -17,6 +17,7 @@ from app.models.hotspot import Hotspot
 from app.models.knowledge import KnowledgeNode, KnowledgeEdge
 from app.models.audit import AuditLog
 from app.models.token import RefreshToken
+from app.models.outbox import OutboxEvent
 
 __all__ = [
     "Base",
@@ -36,4 +37,5 @@ __all__ = [
     "KnowledgeEdge",
     "AuditLog",
     "RefreshToken",
+    "OutboxEvent",
 ]

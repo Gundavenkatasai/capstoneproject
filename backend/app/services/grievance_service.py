@@ -19,6 +19,7 @@ from app.models.evidence import GrievanceEvidence
 from app.models.timeline import GrievanceTimeline
 from app.models.resolution import ResolutionReport
 from app.models.audit import AuditLog
+from app.models.outbox import OutboxEvent
 from app.schemas.grievance import (
     GrievanceCreateRequest,
     GrievanceResponse,
@@ -332,6 +333,26 @@ class GrievanceService:
             ip_address=ip_address,
         )
         session.add(audit)
+
+        # Enqueue transactional outbox event
+        outbox = OutboxEvent(
+            event_type="grievance.created",
+            aggregate_type="grievance",
+            aggregate_id=tracking_id,
+            payload={
+                "grievance_id": tracking_id,
+                "tracking_id": tracking_id,
+                "title": grievance.title,
+                "department_id": dept_id,
+                "priority": priority,
+                "citizen_id": str(current_user.id),
+                "citizen_email": current_user.email,
+                "citizen_phone": current_user.phone_number,
+                "notes": f"New grievance registered in ward {payload.ward}, zone {payload.zone}.",
+            },
+            correlation_id=f"grv-create-{tracking_id}",
+        )
+        session.add(outbox)
 
         await session.commit()
         return await GrievanceService.get_grievance_by_id(session, tracking_id, current_user)

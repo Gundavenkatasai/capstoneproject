@@ -32,8 +32,63 @@ services:
       retries: 5
       start_period: 3s
 
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: civicmind-api
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - evidence_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: civicmind-celery-worker
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - evidence_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.core.celery_app.celery_app worker --loglevel=info -Q default,notifications,grievance_processing,maintenance -c 4
+
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: civicmind-celery-beat
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A app.core.celery_app.celery_app beat --loglevel=info
+
 volumes:
   postgres_data:
     name: civicmind_postgres_data
   redis_data:
     name: civicmind_redis_data
+  evidence_uploads:
+    name: civicmind_evidence_uploads

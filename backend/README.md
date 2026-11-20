@@ -1,8 +1,8 @@
-# CivicMind AI — Backend (Phase 1, 2 & 3 Complete)
+# CivicMind AI — Backend (Phase 1, 2, 3 & 4 Complete)
 
 CivicMind AI is an enterprise-grade AI-powered citizen grievance intelligence and resolution prediction platform designed for modern public administration.
 
-This directory contains the production Python backend scaffold, PostgreSQL 16 + `pgvector` persistence layer, Redis broker and revocation cache, FastAPI application architecture, **Phase 2 Authentication, Security, and Role-Based Access Control (RBAC)**, and **Phase 3 Grievance Management & Lifecycle Engine**.
+This directory contains the production Python backend scaffold, PostgreSQL 16 + `pgvector` persistence layer, Redis broker and revocation cache, FastAPI application architecture, **Phase 2 Authentication, Security, and Role-Based Access Control (RBAC)**, **Phase 3 Grievance Management & Lifecycle Engine**, and **Phase 4 Background Processing Infrastructure & Distributed Task Engine**.
 
 ---
 
@@ -10,17 +10,18 @@ This directory contains the production Python backend scaffold, PostgreSQL 16 + 
 
 - **Python 3.12+** (tested on 3.13)
 - **FastAPI** (ASGI web framework)
+- **Celery 5.7+** (Distributed asynchronous job queue & scheduler)
 - **PostgreSQL 16** with **pgvector** (`0.8.7`)
-- **SQLAlchemy 2.0** (AsyncEngine, AsyncSession, DeclarativeBase)
+- **SQLAlchemy 2.0** (AsyncEngine, SyncEngine, AsyncSession, DeclarativeBase)
 - **Alembic** (Async database schema migrations)
 - **Pydantic v2** (`pydantic-settings`, `email-validator`)
-- **asyncpg** (High-throughput async PostgreSQL driver)
-- **Redis 7** (Broker, token revocation blacklist, and rate-limiting cache)
+- **asyncpg** & **psycopg 3** (High-throughput async & sync PostgreSQL drivers)
+- **Redis 7** (Celery broker, result backend, token revocation blacklist, and rate-limiting cache)
 - **Argon2id** (`argon2-cffi` cryptographic password hashing)
 - **PyJWT** (HMAC-SHA256 signed JWT tokens with standard RFC claims)
 - **Google OAuth2 / Identity Services** (`google-auth`, tokeninfo verification, code exchange)
-- **Docker & Docker Compose**
-- **pytest & pytest-asyncio** (Comprehensive automated test suite)
+- **Docker & Docker Compose** (Full multi-container topology with API, Celery worker & Celery beat)
+- **pytest & pytest-asyncio** (Comprehensive automated test suite with 86 tests)
 
 ---
 
@@ -31,12 +32,13 @@ backend/
 ├── app/
 │   ├── main.py                  # FastAPI application entrypoint, CORS & error handlers
 │   ├── core/
+│   │   ├── celery_app.py        # Centralized Celery task queue & beat configuration
 │   │   ├── config.py            # Pydantic BaseSettings loading from .env & demo credentials
-│   │   ├── database.py          # AsyncEngine, SessionMaker, get_db dependency
+│   │   ├── database.py          # AsyncEngine, SyncEngine, SessionMaker, get_db & get_sync_db
 │   │   ├── dependencies.py      # Auth, RBAC guards, & object-level IDOR protection
 │   │   ├── redis.py             # Shared async Redis client pool & health checks
 │   │   └── security.py          # Argon2id hashing, JWT codec, blacklist, & rate limiting
-│   ├── models/                  # 15 SQLAlchemy 2.0 ORM entities
+│   ├── models/                  # 16 SQLAlchemy 2.0 ORM entities
 │   │   ├── base.py              # DeclarativeBase & TimestampMixin
 │   │   ├── user.py              # User entity with role constraints (citizen, officer, admin)
 │   │   ├── department.py        # Municipal administrative entities
@@ -50,7 +52,8 @@ backend/
 │   │   ├── hotspot.py           # Geospatial anomaly radar clusters
 │   │   ├── knowledge.py         # Knowledge graph nodes & edges
 │   │   ├── audit.py             # Immutable administrative audit logs
-│   │   └── token.py             # Refresh token session persistence & family tracking
+│   │   ├── token.py             # Refresh token session persistence & family tracking
+│   │   └── outbox.py            # Transactional outbox events for at-least-once task delivery
 │   ├── schemas/
 │   │   ├── auth.py              # Pydantic v2 auth request & response contracts
 │   │   ├── grievance.py         # Lifecycle, evidence, resolution & triage schemas
@@ -61,12 +64,18 @@ backend/
 │   │       ├── grievances.py    # Lifecycle & grievance CRUD (/api/v1/grievances/*)
 │   │       ├── uploads.py       # Evidence storage & retrieval (/api/v1/uploads/*)
 │   │       ├── ai.py            # Operational preview endpoints (/api/v1/ai/*)
+│   │       ├── tasks.py         # Background worker health & outbox ops (/api/v1/admin/tasks/*)
 │   │       └── router.py        # Centralized v1 router with RBAC test gates
+│   ├── tasks/                   # Celery asynchronous task definitions
+│   │   ├── notifications.py     # Idempotent notification delivery task
+│   │   ├── grievance.py         # Outbox dispatcher, reconciler, and lifecycle handlers
+│   │   └── maintenance.py       # Safe unattached evidence cleanup & periodic health checks
 │   ├── services/
 │   │   ├── auth_service.py      # Authentication lifecycle, token rotation & reuse detection
 │   │   ├── grievance_service.py # Grievance CRUD, sequence generation, IDOR checks & triage
-│   │   ├── lifecycle.py         # State machine transitions, timeline & audit event generation
-│   │   └── storage_service.py   # MIME/magic-byte upload validation & authorized downloads
+│   │   ├── lifecycle.py         # State machine transitions, timeline, audit & outbox events
+│   │   ├── storage_service.py   # MIME/magic-byte upload validation & authorized downloads
+│   │   └── notifications/       # Pluggable notification provider abstraction (Logging/SMTP)
 │   ├── repositories/            # Data access abstractions
 │   └── utils/
 │       └── logger.py            # Structured logging configuration
@@ -75,20 +84,22 @@ backend/
 │   │   ├── 0001_initial_schema.py          # Baseline migration (15 tables + pgvector)
 │   │   ├── 0002_refresh_token_family.py    # Refresh token family & client metadata
 │   │   ├── 0003_add_google_auth_fields.py  # Google OAuth identity columns
-│   │   └── 0004_grievance_lifecycle.py     # Sequence tracking & nullable evidence link
+│   │   ├── 0004_grievance_lifecycle.py     # Sequence tracking & nullable evidence link
+│   │   └── 0005_outbox_events.py           # Transactional outbox events table
 │   └── env.py                  # Async migration runner
-├── tests/                       # Automated test suite (68 tests, 100% pass rate)
+├── tests/                       # Automated test suite (86 tests, 100% pass rate)
 │   ├── conftest.py              # Async HTTP client, session fixtures, connection cleanup
 │   ├── test_auth.py             # Auth endpoints, JWT, rotation, blacklist & password reset
 │   ├── test_grievances.py       # Grievance CRUD, sequence IDs, IDOR, lifecycle, evidence, resolutions
 │   ├── test_rbac.py             # Role gates, IDOR guards, department isolation, deactivation
 │   ├── test_database.py         # Engine connectivity, transactions, rollbacks
 │   ├── test_health.py           # System and component health endpoints
-│   ├── test_migrations.py       # Alembic versioning and table presence
-│   ├── test_models.py           # Model column types and constraints
+│   ├── test_migrations.py       # Alembic versioning (0001-0005) and table presence
+│   ├── test_models.py           # Model column types, constraints, outbox schema
 │   ├── test_pgvector.py         # Vector extensions, HNSW indexes, cosine distance
 │   ├── test_redis.py            # Redis connectivity, set, get, ttl, flush
-│   └── test_startup.py          # Application metadata and OpenAPI schema
+│   ├── test_startup.py          # Application metadata and OpenAPI schema
+│   └── test_tasks.py            # Celery config, routing, idempotency, outbox, cleanup, admin ops
 ├── scripts/
 │   ├── init-db.sql              # Container initialization SQL script
 │   └── seed_demo_accounts.py    # Idempotent development demo account seeder

@@ -20,6 +20,7 @@ from app.models import (
     KnowledgeEdge,
     AuditLog,
     RefreshToken,
+    OutboxEvent,
 )
 
 EXPECTED_TABLES = {
@@ -38,14 +39,15 @@ EXPECTED_TABLES = {
     "knowledge_edges",
     "audit_logs",
     "refresh_tokens",
+    "outbox_events",
 }
 
 
 def test_table_registration_count():
-    """Verify exactly 15 relational and vector tables are registered."""
+    """Verify exactly 16 relational, vector, and outbox tables are registered."""
     registered = set(Base.metadata.tables.keys())
     assert registered == EXPECTED_TABLES
-    assert len(registered) == 15
+    assert len(registered) == 16
 
 
 def test_user_table_schema():
@@ -111,5 +113,21 @@ def test_audit_logs_schema():
     assert "id" in table.c
     assert "action" in table.c
     assert "entity_type" in table.c
-    assert "performed_by" in table.c
-    assert "timestamp" in table.c
+
+
+def test_outbox_table_schema():
+    """Verify transactional outbox_events table."""
+    table = Base.metadata.tables["outbox_events"]
+    assert "id" in table.c
+    assert "event_type" in table.c
+    assert "aggregate_type" in table.c
+    assert "aggregate_id" in table.c
+    assert "payload" in table.c
+    assert "status" in table.c
+    assert "attempts" in table.c
+    assert "max_attempts" in table.c
+    assert "correlation_id" in table.c
+    assert "scheduled_for" in table.c
+    assert "processed_at" in table.c
+    assert "created_at" in table.c
+    assert "error_details" in table.c

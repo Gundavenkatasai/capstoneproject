@@ -77,73 +77,59 @@ This implementation roadmap outlines the ordered, milestone-driven execution pla
   - Initialize Alembic with async environment template.
   - Enable `vector` and `pg_trgm` extensions in the initial migration script.
   - Generate and run baseline migration (`0001_initial_schema.py`) to create all tables and indexes (including HNSW vector index).
-- [ ] **1.6. Database Seeder Script**
-  - Create `app/db/seed.py` to populate initial departments (Sanitation, Public Works, Water Supply, Electricity, Transport) and administrative zones matching the frontend sample data.
+### Phase 1: Core Backend Scaffold, PostgreSQL 16 + pgvector, Alembic Migrations
+**Status**: COMPLETED (See `docs/PHASE_1_IMPLEMENTATION_REPORT.md`)
+
+- [x] **1.1. FastAPI Project Structure & Async Lifecycle**
+- [x] **1.2. Environment Configuration (`app/core/config.py`)**
+- [x] **1.3. Asynchronous SQLAlchemy 2.0 Engine & Session Manager**
+- [x] **1.4. SQLAlchemy 2.0 ORM Entity Definitions**
+- [x] **1.5. Alembic Database Migrations**
+- [x] **1.6. Database Seeder Script**
 
 ---
 
 ### Phase 2: Authentication, Security & Role-Based Access Control (RBAC)
-**Prerequisites**: Phase 1 completed (Users and Departments tables active).  
-**Goal**: Provide secure JWT-based authentication and role-based route guards matching the frontend auth store.
+**Status**: COMPLETED (See `docs/PHASE_2_IMPLEMENTATION_REPORT.md`)
 
-- [ ] **2.1. Cryptographic Security Utilities**
-  - Implement `app/core/security.py`:
-    - Password hashing and verification using `passlib.context.CryptContext(schemes=["bcrypt"])`.
-    - JWT token generation (Access token: 60m TTL, Refresh token: 7d TTL) using `python-jose`.
-- [ ] **2.2. Fastapi Security Dependencies & RBAC Guards**
-  - Implement `app/core/dependencies.py`:
-    - `get_current_user`: Validates `Authorization: Bearer <token>` header, extracts user claims, checks database.
-    - `require_role(allowed_roles: list[UserRole])`: Enforces role-based boundaries (`CITIZEN`, `DEPARTMENT_OFFICER`, `ADMINISTRATOR`).
-- [ ] **2.3. Authentication Endpoints (`/api/v1/auth`)**
-  - `POST /api/v1/auth/login`: Validates credentials, issues JWT token pair, returns user profile and permissions.
-  - `POST /api/v1/auth/register`: Creates new citizen accounts with password hashing.
-  - `GET /api/v1/auth/me`: Returns the authenticated user's current session and profile.
-  - `POST /api/v1/auth/refresh`: Issues refreshed access tokens.
-  - `POST /api/v1/auth/logout`: Blacklists token in Redis.
-- [ ] **2.4. Default Demo Accounts Seed**
-  - Seed predefined credentials in the database matching the frontend login options:
-    - Admin: `admin@civicmind.gov` / `admin123`
-    - Officer: `officer@civicmind.gov` / `officer123`
-    - Citizen: `citizen@civicmind.gov` / `citizen123`
+- [x] **2.1. Cryptographic Security Utilities (Argon2id + PyJWT)**
+- [x] **2.2. FastAPI Security Dependencies & RBAC Guards**
+- [x] **2.3. Authentication Endpoints (`/api/v1/auth`) & Google OAuth2 SSO**
+- [x] **2.4. Default Demo Accounts Seed**
 
 ---
 
 ### Phase 3: Core Grievance Management, Lifecycle Engine & Multipart API
-**Prerequisites**: Phase 2 completed (User authentication and roles).  
-**Goal**: Implement the complete CRUD and state machine for grievances, timeline events, evidence uploads, and resolution workflows.
+**Status**: COMPLETED (See `docs/PHASE_3_IMPLEMENTATION_REPORT.md`)
 
-- [ ] **3.1. Grievance Tracking ID Generator**
-  - Implement sequence generator producing human-readable IDs matching frontend format: `GRV-YYYY-XXXXX` (e.g., `GRV-2026-08421`).
-- [ ] **3.2. Citizen Submission & Management Endpoints (`/api/v1/grievances`)**
-  - `POST /api/v1/grievances`: Accepts complaint submission (title, description, location, category, anonymous flag). Auto-creates initial timeline event `SUBMITTED`.
-  - `GET /api/v1/grievances`: Filterable list query (status, department, priority, category, date range, pagination, sorting). Citizen role filters automatically by `citizen_id`.
-  - `GET /api/v1/grievances/{id}`: Returns complete grievance record, joined with evidence, timeline events, and resolution report.
-- [ ] **3.3. Multipart Evidence Upload Handling**
-  - Implement local disk / S3 evidence storage service (`app/services/storage.py`).
-  - `POST /api/v1/grievances/{id}/evidence`: Uploads images/documents, extracts EXIF coordinates if available, creates `grievance_evidence` records.
-- [ ] **3.4. Officer Operational Workflow Endpoints**
-  - `PATCH /api/v1/grievances/{id}/status`: Transitions grievance states (`IN_PROGRESS`, `UNDER_REVIEW`, `ESCALATED`). Appends timeline record.
-  - `POST /api/v1/grievances/{id}/resolve`: Officer submits resolution report with before/after photos, labor hours, and contractor notes. Transitions status to `RESOLVED`.
-- [ ] **3.5. Citizen Feedback & Verification Endpoints**
-  - `POST /api/v1/grievances/{id}/feedback`: Citizen rates resolution (1-5 stars) and leaves comments. Transitions status to `CLOSED`.
-  - `POST /api/v1/grievances/{id}/appeal`: Citizen rejects resolution with rationale. Reopens grievance and transitions status to `ESCALATED`.
+- [x] **3.1. Grievance Tracking ID Generator (Sequence-based GRV-YYYY-XXXXX)**
+- [x] **3.2. Citizen Submission & Management Endpoints (`/api/v1/grievances`)**
+- [x] **3.3. Multipart Evidence Upload Handling with Magic-byte Validation**
+- [x] **3.4. Officer Operational Workflow Endpoints & Field Resolution**
+- [x] **3.5. Citizen Feedback & Verification Endpoints (Accept/Reject & Appeals)**
 
 ---
 
 ### Phase 4: Celery Background Task Processing & Message Queue Setup
-**Prerequisites**: Phase 3 completed (Core DB & API operations).  
-**Goal**: Offload heavy computations, model inference, and recurring monitoring to a distributed worker pool.
+**Status**: COMPLETED (See `docs/PHASE_4_IMPLEMENTATION_REPORT.md`)
 
-- [ ] **4.1. Celery Application Configuration**
-  - Configure `app/workers/celery_app.py` with Redis broker (`redis://localhost:6379/0`) and result backend (`redis://localhost:6379/1`).
-  - Configure distinct queues: `ml_triage`, `duplicate_scan`, `sla_monitor`, `analytics`.
-- [ ] **4.2. Asynchronous Triage Dispatch Pipeline**
-  - Connect grievance submission hook to dispatch `tasks_ml.process_grievance_triage.delay(grievance_id)`.
-- [ ] **4.3. Celery Beat Periodic Scheduler**
-  - Configure recurring tasks:
-    - `tasks_sla.check_sla_deadlines`: Runs every 5 minutes to detect approaching or breached SLAs.
-    - `tasks_spatial.scan_radar_anomalies`: Runs every 15 minutes to refresh spatial hotspot clusters.
-    - `tasks_analytics.compute_daily_department_metrics`: Runs daily at midnight.
+- [x] **4.1. Celery Application Configuration (`app/core/celery_app.py`)**
+  - Redis broker and result backend (`redis://localhost:6379/0`), JSON-only task serialization, UTC scheduling.
+  - Dedicated logical queues: `default`, `notifications`, `grievance_processing`, `maintenance`.
+- [x] **4.2. Transactional Outbox Pattern & At-Least-Once Delivery**
+  - Alembic migration `0005_outbox_events.py` and `outbox_events` table.
+  - Automatic ACID outbox event registration inside `create_grievance` and `record_transition`.
+  - Batch outbox dispatcher (`dispatch_outbox_events_task`) and stale recovery (`reconcile_stale_outbox_events_task`).
+- [x] **4.3. Pluggable Notification Provider & Idempotency**
+  - `LoggingNotificationProvider` with structured logging.
+  - Redis idempotency guards (`civicmind:idemp:notif:...`) with 24-hour expiration preventing duplicate delivery.
+- [x] **4.4. Safe Unattached Evidence Cleanup**
+  - `cleanup_abandoned_evidence_task` purges unattached uploads older than 24h.
+  - Enforces strict safety invariant: NEVER touches files attached to active grievances.
+- [x] **4.5. Celery Beat Periodic Scheduler & Admin Observability API**
+  - Celery Beat schedule for outbox dispatch (15s), reconciliation (5m), health check (5m), evidence cleanup (24h).
+  - Admin endpoints (`/api/v1/admin/tasks/health`, `/outbox`, `/dispatch`, `/cleanup`).
+  - 16 new automated tests in `tests/test_tasks.py` (86 tests total, 100% pass rate).
 
 ---
 
