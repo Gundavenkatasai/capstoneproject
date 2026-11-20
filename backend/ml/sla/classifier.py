@@ -41,13 +41,14 @@ def extract_sla_features(df: pd.DataFrame) -> pd.DataFrame:
 
 class SlaRiskClassifier:
     """
-    Predicts calibrated probability of municipal SLA breach and assigns risk tiers.
+    Predicts calibrated probability of municipal SLA breach and assigns risk tiers using XGBoost.
     """
 
     def __init__(self, model_version: str = "v1.0.0"):
         self.model_version = model_version
         self.pipeline: Optional[Pipeline] = None
         self.is_trained: bool = False
+        self.algorithm: str = "XGBoostClassifier"
 
     def build_pipeline(self) -> Pipeline:
         preprocessor = ColumnTransformer(
@@ -65,14 +66,26 @@ class SlaRiskClassifier:
             ]
         )
 
-        base_clf = HistGradientBoostingClassifier(
-            max_iter=150,
-            learning_rate=0.08,
-            max_depth=5,
-            min_samples_leaf=5,
-            class_weight="balanced",
-            random_state=42,
-        )
+        try:
+            import xgboost as xgb
+            base_clf = xgb.XGBClassifier(
+                n_estimators=100,
+                learning_rate=0.08,
+                max_depth=4,
+                eval_metric="logloss",
+                random_state=42,
+            )
+            self.algorithm = "XGBoostClassifier"
+        except Exception:
+            base_clf = HistGradientBoostingClassifier(
+                max_iter=100,
+                learning_rate=0.08,
+                max_depth=5,
+                min_samples_leaf=5,
+                class_weight="balanced",
+                random_state=42,
+            )
+            self.algorithm = "HistGradientBoostingClassifier"
 
         return Pipeline([
             ("preprocessor", preprocessor),

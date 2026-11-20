@@ -17,6 +17,7 @@ for submod in [
     "explainability",
     "registry",
     "evaluation",
+    "geospatial",
 ]:
     try:
         __import__(f"ml.{submod}")

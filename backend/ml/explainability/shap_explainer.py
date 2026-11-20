@@ -102,15 +102,50 @@ class TabularExplainer:
         return factors
 
     @staticmethod
+    def compute_tree_shap_factors(
+        fitted_tree_model,
+        X_row: np.ndarray,
+        feature_names: List[str],
+        top_k: int = 5,
+    ) -> List[Dict[str, Any]]:
+        """
+        Uses shap.TreeExplainer to compute exact Shapley values for tree-based models.
+        """
+        try:
+            import shap
+            explainer = shap.TreeExplainer(fitted_tree_model)
+            shap_values = explainer.shap_values(X_row)
+            
+            # Extract 1D array
+            if isinstance(shap_values, list):
+                vals = shap_values[1] if len(shap_values) > 1 else shap_values[0]
+            elif len(shap_values.shape) > 1:
+                vals = shap_values[0]
+            else:
+                vals = shap_values
+
+            factors = []
+            sorted_idx = np.argsort(np.abs(vals))[::-1][:top_k]
+            for idx in sorted_idx:
+                w = float(vals[idx])
+                fname = feature_names[idx] if idx < len(feature_names) else f"feature_{idx}"
+                factors.append({
+                    "feature": fname,
+                    "weight": round(w, 4),
+                    "effect": "positive" if w >= 0 else "negative",
+                    "description": f"Shapley contribution of {fname} ({w:+.3f}) to prediction.",
+                })
+            return factors
+        except Exception:
+            return []
+
+    @staticmethod
     def explain_sla_risk(
         breach_prob: float,
         priority: str,
         category: str,
         ward: str,
     ) -> List[Dict[str, Any]]:
-        """
-        Produces feature attributions explaining SLA breach risk probability.
-        """
         factors: List[Dict[str, Any]] = []
 
         if priority in ("critical", "high"):

@@ -114,6 +114,22 @@ async def get_current_active_user(
     return current_user
 
 
+async def get_optional_current_user(
+    auth_header: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """
+    Optionally extracts and validates the Bearer token.
+    Returns User if valid Bearer token provided, otherwise None without raising 401.
+    """
+    if not auth_header or not auth_header.credentials:
+        return None
+    try:
+        return await get_current_user(auth_header, db)
+    except HTTPException:
+        return None
+
+
 def require_role(allowed_roles: List[str]) -> Callable:
     """
     Dependency factory enforcing role-based access control (RBAC).

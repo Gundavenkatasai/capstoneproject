@@ -40,9 +40,9 @@ A modular directory structure was implemented:
 - `backend/ml/duplicates/`:
   - `detector.py`: Semantic duplicate detector using pgvector cosine distance queries (`cosine_distance(embedding, query)`), Haversine geospatial proximity gating ($\le 1000\text{m}$), and temporal windowing ($\le 30\text{d}$). Strictly non-destructive: flags candidate clusters for human review.
 - `backend/ml/resolution/`:
-  - `regressor.py`: `HistGradientBoostingRegressor` predicting continuous resolution duration in days using only intake features (zero future target leakage), bounded to strictly positive values $[0.5, 30.0\text{ days}]$ with uncertainty intervals.
+  - `regressor.py`: `LGBMRegressor` (`lightgbm 4.7.0`, with HistGradientBoosting fallback) predicting continuous resolution duration in days using only intake features (zero future target leakage), bounded to strictly positive values $[0.5, 30.0\text{ days}]$ with uncertainty intervals.
 - `backend/ml/sla/`:
-  - `classifier.py`: Calibrated binary classifier predicting SLA breach risk probability, risk tier (`low`, `medium`, `high`, `critical`), and actionable contributing factors.
+  - `classifier.py`: `XGBClassifier` (`xgboost 3.4.1`, with HistGradientBoosting fallback) predicting SLA breach risk probability, risk tier (`low`, `medium`, `high`, `critical`), and actionable contributing factors.
 - `backend/ml/explainability/`:
   - `shap_explainer.py`: TreeSHAP tabular feature attribution engine formatting factors strictly as `SHAPFactor` schemas (`feature`, `weight`, `effect`, `description`).
   - `token_attribution.py`: Lexical token attribution highlighting domain keywords driving NLP predictions.

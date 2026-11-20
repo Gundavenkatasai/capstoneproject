@@ -1,8 +1,17 @@
 import { SimulatorInput, SimulatorResult } from "@/types";
-import { mockDelay } from "./apiClient";
+import { mockDelay, USE_MOCK, apiClient } from "./apiClient";
 
 export const simulatorService = {
   async runSimulation(input: SimulatorInput): Promise<SimulatorResult> {
+    if (!USE_MOCK) {
+      try {
+        const res = await apiClient.post<SimulatorResult>("/simulator/run", input);
+        return res.data;
+      } catch (e) {
+        console.warn("Falling back to local simulation engine", e);
+      }
+    }
+
     const baseBacklog = 1127;
     const baseResolutionDays = 4.3;
     const baseSlaBreachRate = 12.8;

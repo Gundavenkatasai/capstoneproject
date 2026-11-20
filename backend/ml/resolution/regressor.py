@@ -45,7 +45,7 @@ def extract_regression_features(df: pd.DataFrame) -> pd.DataFrame:
 
 class ResolutionRegressor:
     """
-    Predicts estimated resolution time (days) using gradient boosting trees.
+    Predicts estimated resolution time (days) using LightGBM gradient boosted trees.
     Enforces strictly positive duration bounds [0.5, 30.0].
     """
 
@@ -54,6 +54,7 @@ class ResolutionRegressor:
         self.pipeline: Optional[Pipeline] = None
         self.is_trained: bool = False
         self.feature_names: List[str] = []
+        self.algorithm: str = "LightGBMRegressor"
 
     def build_pipeline(self) -> Pipeline:
         preprocessor = ColumnTransformer(
@@ -71,13 +72,26 @@ class ResolutionRegressor:
             ]
         )
 
-        model = HistGradientBoostingRegressor(
-            max_iter=150,
-            learning_rate=0.08,
-            max_depth=5,
-            min_samples_leaf=5,
-            random_state=42,
-        )
+        try:
+            import lightgbm as lgb
+            model = lgb.LGBMRegressor(
+                n_estimators=100,
+                learning_rate=0.08,
+                max_depth=5,
+                num_leaves=31,
+                random_state=42,
+                verbosity=-1,
+            )
+            self.algorithm = "LightGBMRegressor"
+        except Exception:
+            model = HistGradientBoostingRegressor(
+                max_iter=100,
+                learning_rate=0.08,
+                max_depth=5,
+                min_samples_leaf=5,
+                random_state=42,
+            )
+            self.algorithm = "HistGradientBoostingRegressor"
 
         return Pipeline([
             ("preprocessor", preprocessor),

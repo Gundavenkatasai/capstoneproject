@@ -163,12 +163,12 @@ class ModelRegistry:
                 },
                 "resolution_regressor": {
                     "version": "v1.0.0-benchmark",
-                    "algorithm": "HistGradientBoostingRegressor",
+                    "algorithm": getattr(res_reg, "algorithm", "LightGBMRegressor"),
                     "metrics": res_metrics,
                 },
                 "sla_classifier": {
                     "version": "v1.0.0-benchmark",
-                    "algorithm": "Calibrated HistGradientBoostingClassifier",
+                    "algorithm": getattr(sla_clf, "algorithm", "XGBoostClassifier"),
                     "metrics": sla_metrics,
                 },
             },

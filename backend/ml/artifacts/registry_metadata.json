@@ -1,14 +1,14 @@
 {
   "registry_version": "1.0.0",
-  "last_trained_at": "2026-11-20T13:58:44.195781+00:00",
+  "last_trained_at": "2026-11-20T14:30:07.868104+00:00",
   "training_dataset": "benchmark_research_v1",
   "readiness_status": "insufficient_production_data",
   "production_audit": {
-    "total_grievances": 12,
+    "total_grievances": 16,
     "resolved_count": 0,
     "sla_breached_count": 0,
     "is_ready": false,
-    "reason": "Insufficient sample count (12 < 50). Production system is in early cold-start stage.",
+    "reason": "Insufficient sample count (16 < 50). Production system is in early cold-start stage.",
     "source": "postgres_operational_insufficient"
   },
   "models": {
@@ -50,25 +50,25 @@
     },
     "resolution_regressor": {
       "version": "v1.0.0-benchmark",
-      "algorithm": "HistGradientBoostingRegressor",
+      "algorithm": "LightGBMRegressor",
       "metrics": {
-        "mae": 0.6093,
-        "rmse": 0.8601,
-        "median_ae": 0.4077,
-        "r2_score": 0.7453
+        "mae": 0.7406,
+        "rmse": 1.0316,
+        "median_ae": 0.5361,
+        "r2_score": 0.6336
       }
     },
     "sla_classifier": {
       "version": "v1.0.0-benchmark",
-      "algorithm": "Calibrated HistGradientBoostingClassifier",
+      "algorithm": "XGBoostClassifier",
       "metrics": {
-        "accuracy": 0.85,
-        "precision": 0.6368,
-        "recall": 0.9846,
-        "f1_score": 0.7734,
-        "roc_auc": 0.957,
-        "pr_auc": 0.8858,
-        "brier_score": 0.0943
+        "accuracy": 0.836,
+        "precision": 0.8,
+        "recall": 0.4923,
+        "f1_score": 0.6095,
+        "roc_auc": 0.8969,
+        "pr_auc": 0.7706,
+        "brier_score": 0.1158
       }
     }
   }

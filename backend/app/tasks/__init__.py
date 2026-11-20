@@ -19,6 +19,9 @@ from app.tasks.ml import (
     batch_duplicate_scan_task,
     retrain_models_task,
 )
+from app.tasks.radar import (
+    scan_geographic_hotspots_task,
+)
 
 __all__ = [
     "send_grievance_notification_task",
@@ -31,4 +34,5 @@ __all__ = [
     "detect_duplicate_grievances_task",
     "batch_duplicate_scan_task",
     "retrain_models_task",
+    "scan_geographic_hotspots_task",
 ]

@@ -165,17 +165,20 @@ This implementation roadmap outlines the ordered, milestone-driven execution pla
 **Prerequisites**: Phase 5 completed (Embeddings and DB records populated).  
 **Goal**: Detect emerging geographic outbreaks, recurring infrastructure failures, and anomalous complaint surges.
 
-- [ ] **6.1. Spatial-Temporal DBSCAN Clustering Pipeline**
-  - Implement scikit-learn `DBSCAN(eps=0.5/6371.0, min_samples=4, metric='haversine')` over 72-hour sliding coordinate windows.
-  - Calculate cluster convex hulls, geographic centroids, and radius.
-- [ ] **6.2. Anomaly Scoring & Velocity Surge Metrics**
+- [x] **6.1. Spatial-Temporal DBSCAN Clustering Pipeline**
+  - Implement scikit-learn `DBSCAN(eps=0.5/6371.0, min_samples=2, metric='haversine')` over coordinate windows.
+  - Calculate cluster convex hulls, geographic centroids, and radius in meters.
+  - Strict segregation: synthetic benchmark records quarantined from operational hotspots.
+- [x] **6.2. Anomaly Scoring & Velocity Surge Metrics**
   - Compute historical baseline complaint volume per ward/zone.
   - Calculate growth rate percentage ($\Delta \% = \frac{V_{\text{current}} - V_{\text{baseline}}}{V_{\text{baseline}}} \times 100$).
-  - Assign threat severity levels (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`).
-- [ ] **6.3. Radar Persistence & API Endpoints**
-  - Synchronize active clusters into `hotspots` table.
-  - `GET /api/v1/radar/hotspots`: Returns list of geographic clusters with severity, coordinates, and affected categories.
-  - `GET /api/v1/radar/summary`: Aggregated early-warning indicators (active hotspots, emerging clusters, critical risks).
+  - Assign threat severity levels (`low`, `medium`, `high`, `critical`) and domain-specific intervention actions.
+- [x] **6.3. Radar Persistence & API Endpoints**
+  - Synchronize active clusters into `hotspots` PostgreSQL table.
+  - `GET /api/v1/early-warning/hotspots` (and alias `/radar/hotspots`): Returns list of geographic clusters with severity, coordinates, and affected categories.
+  - `GET /api/v1/early-warning/summary` (and alias `/radar/summary`): Aggregated early-warning indicators (active hotspots, emerging clusters, critical risks).
+  - `POST /api/v1/early-warning/hotspots/{id}/acknowledge`: Task force dispatch acknowledgement.
+  - `POST /api/v1/simulator/run` & `GET /api/v1/simulator/baseline`: Counterfactual Workload Simulator.
 
 ---
 
