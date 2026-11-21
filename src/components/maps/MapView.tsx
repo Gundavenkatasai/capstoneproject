@@ -1,7 +1,4 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { Hotspot, Grievance } from "@/types";
 import { AlertCircle, MapPin } from "lucide-react";
 
@@ -16,7 +13,6 @@ interface MapViewProps {
   className?: string;
 }
 
-// Internal dynamic wrapper to avoid SSR Leaflet "window is not defined" issues
 export function MapView({
   hotspots = [],
   grievances = [],
@@ -95,9 +91,7 @@ export function MapView({
           <path d="M 450,50 Q 520,250 600,480" fill="none" stroke="#1e3a8a" strokeWidth="3" strokeOpacity="0.3" />
 
           {/* Render Hotspot Radiation Radii & Centroids */}
-          {hotspots.map((h, idx) => {
-            // Project lat/lng to 800x500 viewport
-            // Delhi bounds: lat 28.50 to 28.66, lng 77.05 to 77.30
+          {hotspots.map((h) => {
             const x = Math.min(750, Math.max(60, ((h.lng - 77.04) / 0.28) * 700 + 50));
             const y = Math.min(450, Math.max(50, 480 - ((h.lat - 28.5) / 0.17) * 420));
             const isSelected = selectedId === h.id;

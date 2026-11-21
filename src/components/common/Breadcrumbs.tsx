@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   return (
     <nav className={cn("flex items-center space-x-1.5 text-xs text-slate-500", className)}>
       <Link
-        href="/"
+        to="/"
         className="inline-flex items-center text-slate-400 hover:text-slate-700 transition-colors"
       >
         <Home className="w-3.5 h-3.5" />
@@ -30,7 +30,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
             <ChevronRight className="w-3 h-3 text-slate-400" />
             {item.href && !isLast ? (
               <Link
-                href={item.href}
+                to={item.href}
                 className="hover:text-slate-800 transition-colors font-medium truncate max-w-[160px]"
               >
                 {item.label}

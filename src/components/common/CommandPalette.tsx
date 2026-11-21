@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import {
   Search,
@@ -29,7 +29,7 @@ interface CommandItem {
 export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const router = useRouter();
+  const navigate = useNavigate();
   const { switchRole } = useAuthStore();
 
   useEffect(() => {
@@ -53,14 +53,14 @@ export function CommandPalette() {
       title: "Admin Grievance Intelligence Command Center",
       category: "Navigation",
       icon: LayoutDashboard,
-      action: () => router.push("/admin"),
+      action: () => navigate("/admin"),
     },
     {
       id: "admin-all",
       title: "All Grievances & Priority Queue",
       category: "Navigation",
       icon: FileText,
-      action: () => router.push("/admin/grievances"),
+      action: () => navigate("/admin/grievances"),
     },
     {
       id: "admin-dup",
@@ -68,7 +68,7 @@ export function CommandPalette() {
       category: "AI Research",
       icon: Copy,
       badge: "AI Semantic",
-      action: () => router.push("/admin/duplicates"),
+      action: () => navigate("/admin/duplicates"),
     },
     {
       id: "admin-radar",
@@ -76,14 +76,14 @@ export function CommandPalette() {
       category: "AI Research",
       icon: Radio,
       badge: "Spatial AI",
-      action: () => router.push("/admin/early-warning"),
+      action: () => navigate("/admin/early-warning"),
     },
     {
       id: "admin-pred",
       title: "Predictive Analytics & SLA Breach Forecaster",
       category: "AI Research",
       icon: TrendingUp,
-      action: () => router.push("/admin/predictions"),
+      action: () => navigate("/admin/predictions"),
     },
     {
       id: "admin-xai",
@@ -91,21 +91,21 @@ export function CommandPalette() {
       category: "AI Research",
       icon: BrainCircuit,
       badge: "XAI",
-      action: () => router.push("/admin/explainability"),
+      action: () => navigate("/admin/explainability"),
     },
     {
       id: "admin-kg",
       title: "Civic Entity Knowledge Graph",
       category: "AI Research",
       icon: Share2,
-      action: () => router.push("/admin/knowledge-graph"),
+      action: () => navigate("/admin/knowledge-graph"),
     },
     {
       id: "admin-verify",
       title: "Resolution Quality & Ground-Truth Verification",
       category: "Navigation",
       icon: CheckSquare,
-      action: () => router.push("/admin/resolution-verification"),
+      action: () => navigate("/admin/resolution-verification"),
     },
     {
       id: "admin-sim",
@@ -113,14 +113,14 @@ export function CommandPalette() {
       category: "AI Research",
       icon: Sliders,
       badge: "What-If",
-      action: () => router.push("/admin/simulator"),
+      action: () => navigate("/admin/simulator"),
     },
     {
       id: "admin-models",
       title: "Model Performance & Benchmarks",
       category: "AI Research",
       icon: Database,
-      action: () => router.push("/admin/models"),
+      action: () => navigate("/admin/models"),
     },
     {
       id: "role-citizen",
@@ -129,7 +129,7 @@ export function CommandPalette() {
       icon: UserCheck,
       action: () => {
         switchRole("citizen");
-        router.push("/citizen/dashboard");
+        navigate("/citizen/dashboard");
       },
     },
     {
@@ -139,7 +139,7 @@ export function CommandPalette() {
       icon: UserCheck,
       action: () => {
         switchRole("officer");
-        router.push("/officer/dashboard");
+        navigate("/officer/dashboard");
       },
     },
     {
@@ -149,7 +149,7 @@ export function CommandPalette() {
       icon: UserCheck,
       action: () => {
         switchRole("admin");
-        router.push("/admin");
+        navigate("/admin");
       },
     },
   ];

@@ -1,8 +1,5 @@
-"use client";
-
 import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { NotificationCenter } from "./NotificationCenter";
 import { CommandPalette } from "./CommandPalette";
@@ -22,13 +19,13 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { user, role, logout } = useAuthStore();
   const [profileOpen, setProfileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    router.push("/login");
+    navigate("/login");
   };
 
   return (
@@ -66,7 +63,7 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
         {/* Quick action button */}
         {role === "citizen" && (
           <Link
-            href="/citizen/submit"
+            to="/citizen/submit"
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -76,7 +73,7 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
 
         {role === "admin" && (
           <Link
-            href="/admin/simulator"
+            to="/admin/simulator"
             className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
           >
             Run Workload Sim
@@ -118,7 +115,7 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
                 </div>
 
                 <Link
-                  href={role === "admin" ? "/admin/settings" : `/${role}/profile`}
+                  to={role === "admin" ? "/admin/settings" : `/${role}/profile`}
                   onClick={() => setProfileOpen(false)}
                   className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
                 >
@@ -127,7 +124,7 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
                 </Link>
 
                 <Link
-                  href="/"
+                  to="/"
                   onClick={() => setProfileOpen(false)}
                   className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
                 >

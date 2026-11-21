@@ -115,7 +115,9 @@ export const authService = {
         console.warn("Failed to fetch Google auth URL from API:", err);
       }
     }
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+    const clientId =
+      (typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_CLIENT_ID) ||
+      "96441354906-71qor2il7h4gds6cegtfe3nbdnonacdi.apps.googleusercontent.com";
     const redirect = redirect_uri || (typeof window !== "undefined" ? `${window.location.origin}/auth/callback/google` : "http://localhost:3000/auth/callback/google");
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=select_account`;
     return { auth_url: authUrl, client_id: clientId };

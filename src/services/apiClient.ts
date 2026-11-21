@@ -1,7 +1,12 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API !== "false";
+const API_BASE_URL =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+  "http://localhost:8000/api/v1";
+
+export const USE_MOCK =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_USE_MOCK_API === "true") ||
+  false;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

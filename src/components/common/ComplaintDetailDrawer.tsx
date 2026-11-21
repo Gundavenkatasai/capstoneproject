@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Grievance } from "@/types";
 import { StatusBadge } from "./StatusBadge";
 import { PriorityBadge } from "./PriorityBadge";
@@ -48,7 +48,7 @@ export function ComplaintDetailDrawer({
 
             <div className="flex items-center gap-2">
               <Link
-                href={`${baseRoute}/grievances/${grievance.id}`}
+                to={`${baseRoute}/grievances/${grievance.id}`}
                 className="p-1.5 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
                 title="Open Dedicated Full Page"
               >
@@ -188,7 +188,7 @@ export function ComplaintDetailDrawer({
           {/* Drawer Footer Actions */}
           <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
             <Link
-              href={`${baseRoute}/grievances/${grievance.id}`}
+              to={`${baseRoute}/grievances/${grievance.id}`}
               className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
             >
               Open Complete Grievance Record →

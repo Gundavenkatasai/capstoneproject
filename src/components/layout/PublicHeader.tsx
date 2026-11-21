@@ -1,14 +1,12 @@
-"use client";
-
 import React from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
 export function PublicHeader() {
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-subtle">
             CM
           </div>
@@ -42,13 +40,13 @@ export function PublicHeader() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/login"
+            to="/login"
             className="text-xs font-semibold text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded hover:bg-slate-100 transition-colors"
           >
             Sign In
           </Link>
           <Link
-            href="/citizen/submit"
+            to="/citizen/submit"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle transition-colors"
           >
             File Grievance
@@ -86,22 +84,22 @@ export function PublicFooter() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/citizen/dashboard" className="hover:text-white transition-colors">
+                <Link to="/citizen/dashboard" className="hover:text-white transition-colors">
                   Citizen Services Portal
                 </Link>
               </li>
               <li>
-                <Link href="/officer/dashboard" className="hover:text-white transition-colors">
+                <Link to="/officer/dashboard" className="hover:text-white transition-colors">
                   Department Officer Workspace
                 </Link>
               </li>
               <li>
-                <Link href="/admin" className="hover:text-white transition-colors">
+                <Link to="/admin" className="hover:text-white transition-colors">
                   Apex Intelligence Command Center
                 </Link>
               </li>
               <li>
-                <Link href="/citizen/submit" className="hover:text-white transition-colors">
+                <Link to="/citizen/submit" className="hover:text-white transition-colors">
                   AI Complaint Submission Wizard
                 </Link>
               </li>
@@ -114,32 +112,32 @@ export function PublicFooter() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/admin/early-warning" className="hover:text-white transition-colors">
+                <Link to="/admin/early-warning" className="hover:text-white transition-colors">
                   Civic Early-Warning Radar
                 </Link>
               </li>
               <li>
-                <Link href="/admin/duplicates" className="hover:text-white transition-colors">
+                <Link to="/admin/duplicates" className="hover:text-white transition-colors">
                   Duplicate Intelligence Center
                 </Link>
               </li>
               <li>
-                <Link href="/admin/predictions" className="hover:text-white transition-colors">
+                <Link to="/admin/predictions" className="hover:text-white transition-colors">
                   SLA Risk & Resolution Predictor
                 </Link>
               </li>
               <li>
-                <Link href="/admin/explainability" className="hover:text-white transition-colors">
+                <Link to="/admin/explainability" className="hover:text-white transition-colors">
                   Explainable AI (SHAP & Trace)
                 </Link>
               </li>
               <li>
-                <Link href="/admin/knowledge-graph" className="hover:text-white transition-colors">
+                <Link to="/admin/knowledge-graph" className="hover:text-white transition-colors">
                   Civic Entity Knowledge Graph
                 </Link>
               </li>
               <li>
-                <Link href="/admin/simulator" className="hover:text-white transition-colors">
+                <Link to="/admin/simulator" className="hover:text-white transition-colors">
                   Counterfactual Workload Simulator
                 </Link>
               </li>
@@ -152,17 +150,17 @@ export function PublicFooter() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/admin/models" className="hover:text-white transition-colors">
+                <Link to="/admin/models" className="hover:text-white transition-colors">
                   Model Performance & Benchmarks
                 </Link>
               </li>
               <li>
-                <Link href="/admin/datasets" className="hover:text-white transition-colors">
+                <Link to="/admin/datasets" className="hover:text-white transition-colors">
                   Dataset Explorer & Augmentation
                 </Link>
               </li>
               <li>
-                <Link href="/admin/audit-logs" className="hover:text-white transition-colors">
+                <Link to="/admin/audit-logs" className="hover:text-white transition-colors">
                   Audit Logs & Traceability
                 </Link>
               </li>

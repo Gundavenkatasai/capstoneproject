@@ -1,7 +1,5 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/services/authService";
 import { Loader2 } from "lucide-react";
@@ -23,13 +21,14 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   redirectTo,
   className = "",
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { loginWithGoogle, isLoading: storeLoading } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
   const clientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_CLIENT_ID) ||
+    "96441354906-71qor2il7h4gds6cegtfe3nbdnonacdi.apps.googleusercontent.com";
 
   // Load Google Identity Services script
   useEffect(() => {
@@ -80,7 +79,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     try {
       await loginWithGoogle({ credential: response.credential, id_token: response.credential });
       const destination = redirectTo || "/citizen/dashboard";
-      router.push(destination);
+      navigate(destination);
     } catch (err) {
       console.error("Google authentication failed:", err);
       setLoading(false);

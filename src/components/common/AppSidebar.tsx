@@ -1,8 +1,5 @@
-"use client";
-
 import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { UserRole } from "@/types";
 import { cn } from "@/lib/utils";
@@ -45,7 +42,7 @@ interface NavSection {
 }
 
 export function AppSidebar({ className }: { className?: string }) {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const { user, role, switchRole } = useAuthStore();
 
   const adminSections: NavSection[] = [
@@ -137,7 +134,7 @@ export function AppSidebar({ className }: { className?: string }) {
     >
       {/* Brand Header */}
       <div className="h-16 px-5 border-b border-slate-800/80 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <Link to="/" className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-subtle">
             CM
           </div>
@@ -177,7 +174,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 return (
                   <Link
                     key={iIdx}
-                    href={item.href}
+                    to={item.href}
                     className={cn(
                       "flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-all group",
                       isActive

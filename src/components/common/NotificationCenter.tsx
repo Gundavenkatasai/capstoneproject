@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { formatRelativeTime } from "@/lib/utils";
 import { Bell, Check, Trash2, ExternalLink, AlertTriangle, Info, CheckCircle2, AlertCircle } from "lucide-react";
@@ -88,7 +88,7 @@ export function NotificationCenter() {
                       </p>
                       {item.link && (
                         <Link
-                          href={item.link}
+                          to={item.link}
                           onClick={() => {
                             markAsRead(item.id);
                             setIsOpen(false);

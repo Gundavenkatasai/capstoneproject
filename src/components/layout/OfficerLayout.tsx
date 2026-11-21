@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { AppSidebar } from "@/components/common/AppSidebar";
 import { AppHeader } from "@/components/common/AppHeader";

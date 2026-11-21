@@ -45,7 +45,7 @@
 
 ## 🛠️ Technology Stack
 
-- **Framework**: [Next.js](https://nextjs.org/) (App Router, React 18, TypeScript)
+- **Framework**: [React.js](https://react.dev/) (React 18, Vite, React Router DOM, TypeScript)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) with enterprise design tokens
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Charts**: [Recharts](https://recharts.org/) (Responsive Area, Bar, Line, Pie)
